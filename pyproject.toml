@@ -23,7 +23,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = ["pytest>=7", "pytest-mock>=3"]
 
-[project.scripts]
+[project.gui-scripts]
 livesttt = "livesttt.__main__:main"
 
 [tool.hatch.build.targets.wheel]
