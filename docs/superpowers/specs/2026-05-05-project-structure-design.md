@@ -9,7 +9,7 @@
 
 ## Decisions
 
-- **Layout:** `src/` layout (`src/livestt/`) — prevents accidental import without install, keeps PyInstaller and `pip install -e .` honest.
+- **Layout:** `src/` layout (`src/livestt/`) - prevents accidental import without install, keeps PyInstaller and `pip install -e .` honest.
 - **UI:** System-tray icon (pystray) + small tkinter settings window. No browser-based UI.
 - **Entry point:** `python -m livestt` via `src/livestt/__main__.py`; declared in `pyproject.toml` as a GUI entry point.
 - **Distribution:** `pyproject.toml` for metadata/deps; PyInstaller for `.exe` bundling (spec file at repo root).
@@ -93,7 +93,7 @@ Triggered from the tray "Transcribe file…" menu item:
 4. `llm.client.refine(text)` optionally cleans up (respects the same refinement toggle as live dictation)
 5. `injection.injector.inject(text)` copies to clipboard
 6. `injection.exporter.save_transcript(text, source_path)` writes `<filename>.txt` next to the audio file
-7. Tray status briefly shows "Done — transcript saved" then returns to idle
+7. Tray status briefly shows "Done - transcript saved" then returns to idle
 
 ## Tests (`tests/`)
 
