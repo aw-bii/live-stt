@@ -4,16 +4,19 @@ A local, offline voice-dictation app for Windows that provides real-time speech-
 
 ## Overview
 
-Live STT captures microphone audio, transcribes speech using VibeVoice (local STT), optionally refines the text with Gemma 4 (local LLM via Ollama), and injects the result into whatever window the user has focused - all without any cloud dependency.
+Live STT captures microphone audio, transcribes speech using VibeVoice (local STT via Transformers), optionally refines the text with a local LLM (via Ollama), and injects the result into whatever window you have focused - all without any cloud dependency.
 
 ## Features
 
-- **Real-time Speech Recognition**: Push-to-talk or toggle recording modes
-- **Local Processing**: All audio and text processing happens on your machine
-- **Optional LLM Refinement**: Improve transcriptions with Gemma 4 via Ollama
+- **Real-time Speech Recognition**: Push-to-talk recording (hold hotkey)
+- **Local STT**: Uses VibeVoice-ASR via HuggingFace Transformers (no external server needed)
+- **Fallback STT**: Falls back to vLLM HTTP if local model unavailable
+- **Optional LLM Refinement**: Improve transcriptions with local LLM via Ollama
 - **System-wide Injection**: Works in any application via clipboard + Ctrl+V
-- **File Transcription**: Transcribe existing audio files
-- **Customizable Hotkeys**: Tailor the workflow to your preferences
+- **File Transcription**: Transcribe existing audio files (WAV, MP3, M4A, FLAC)
+- **Customizable Hotkeys**: Configure push-to-talk and cancel hotkeys
+- **Settings UI**: Configure model, VAD threshold, timeouts, and more
+- **Health Monitoring**: Automatic detection of service availability
 - **Privacy First**: No data leaves your computer
 
 ## Documentation
@@ -31,7 +34,7 @@ For detailed information about the project:
 ```bash
 # Clone the repository
 git clone <repository-url>
-cd Live STT
+cd "Live STT"
 
 # Create and activate virtual environment
 python -m venv .venv
@@ -40,7 +43,7 @@ python -m venv .venv
 # Install dependencies
 pip install -e .
 
-# Install and run Ollama (separately)
+# Optional: Install Ollama for LLM refinement
 # Download from https://ollama.com
 ollama pull gemma4
 
@@ -48,16 +51,41 @@ ollama pull gemma4
 python -m src.livesttt
 ```
 
+## Usage
+
+1. **Start the app**: Runs in system tray
+2. **Push-to-talk**: Hold the configured hotkey (default: Space) to record
+3. **Release to transcribe**: Audio is transcribed and injected into focused window
+4. **Cancel**: Press Escape during recording to cancel
+5. **Settings**: Right-click tray icon → Settings to configure
+   - Push-to-talk hotkey
+   - Cancel hotkey
+   - LLM model name
+   - Enable/disable refinement
+   - VAD threshold (speech detection sensitivity)
+   - Timeouts
+
 ## Prerequisites
 
 - Windows 10+ (64-bit recommended)
-- Python 3.8+
-- Ollama running locally (for LLM refinement features)
+- Python 3.10+
+- 8GB RAM recommended (4GB minimum without LLM)
 - Microphone for speech input
+- **ffmpeg** (optional - required for MP3, M4A, FLAC file support)
+  - Install via `winget install ffmpeg` or download from https://ffmpeg.org
 
-## Contributing
+## Building .exe
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines.
+```bash
+pip install pyinstaller
+pyinstaller livesttt.spec
+```
+
+## Running Tests
+
+```bash
+pytest tests/ -v
+```
 
 ## License
 

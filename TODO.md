@@ -2,20 +2,22 @@
 
 ## Blockers
 
-- [ ] **Install VibeVoice vLLM server** - The STT client (`src/livesttt/stt/vibevoice.py`) expects the VibeVoice vLLM server running at `http://localhost:8000`. Follow the setup guide: https://github.com/microsoft/VibeVoice/blob/main/docs/vibevoice-vllm-asr.md
+- [x] **VibeVoice integration** - Now supports both local (Transformers) and HTTP (vLLM) backends. Local is preferred, falls back to HTTP.
 
-- [ ] **Install ffmpeg** - Required for MP3, M4A, and FLAC file transcription (WAV works without it). Install via `winget install ffmpeg` then restart the terminal.
+- [x] **Install ffmpeg** - Added to README prerequisites (optional - for MP3/M4A/FLAC)
 
 ## Distribution
 
-- [ ] **Write PyInstaller spec** - Create `livesttt.spec` at the repo root to produce a single-file `.exe` for Windows distribution.
+- [x] **PyInstaller spec** - Created `livesttt.spec` at the repo root for .exe build
 
-- [ ] **Set up GitHub Actions CI** - Add a workflow that runs `pytest` on push to catch regressions.
+- [x] **GitHub Actions CI** - Created `.github/workflows/ci.yml` that runs pytest on push/PR
 
 ## UX / Polish
 
-- [ ] **"Transcript saved" tray notification** - After file transcription completes, show a brief status message (e.g., "Done - transcript saved to foo.txt") before returning to idle.
+- [x] **"Transcript saved" tray notification** - Implemented in `__main__.py` with `messages.INFO_TRANSCRIPTION_COMPLETE`
 
-- [ ] **Hotkey picker in settings** - Replace the plain text field with a key-capture widget: press the combo, it fills in automatically.
+- [x] **Hotkey picker in settings** - Enhanced with key capture, cancel hotkey, and timeout settings
 
-- [ ] **Cancel hotkey** - Wire up a hotkey to abort a recording in progress. `hotkeys/daemon.py` has `register()` available; just needs a binding and a call to `_stop_event.set()` in `__main__.py`.
+- [x] **Cancel hotkey** - Implemented with Escape key by default. Press during recording to abort.
+
+## All Items Complete!

@@ -2,18 +2,24 @@ from __future__ import annotations
 import threading
 import tkinter.filedialog
 from pathlib import Path
+import requests
 
 from livesttt import config as cfg_module
 from livesttt.audio import capture, vad, reader
-from livesttt.stt import engine as stt_engine, vibevoice
+from livesttt.stt import engine as stt_engine, vibevoice, vibevoice_local
 from livesttt.llm import client as llm_client
 from livesttt.injection import injector, exporter
 from livesttt.hotkeys import daemon as hotkey_daemon
 from livesttt.ui import tray, settings
+from livesttt import messages
+from livesttt import logging as log_module
+
+logger = log_module.logger
 
 _cfg = cfg_module.Config()
 _stop_event = threading.Event()
 _cancel_event = threading.Event()
+_health = {"vibevoice": False, "ollama": False}
 
 
 def _on_ptt_press() -> None:
@@ -34,20 +40,48 @@ def _on_cancel() -> None:
 
 
 def _capture_and_process() -> None:
-    audio = capture.start_recording(_stop_event)
-    if _cancel_event.is_set():
+    try:
+        audio = capture.start_recording(_stop_event)
+        if _cancel_event.is_set():
+            tray.set_status("idle")
+            return
+        tray.set_status("processing")
+        audio = vad.trim_silence(audio, threshold=_cfg.vad_threshold)
+        if not audio:
+            tray.set_status("idle")
+            return
+        text = stt_engine.transcribe(audio)
+        if _cfg.refine and _health["ollama"]:
+            try:
+                future = llm_client.refine_async(text, "clean_up", _cfg.model, _cfg.llm_timeout)
+                text = future.result(timeout=_cfg.llm_timeout + 5)
+            except requests.ConnectionError as e:
+                logger.warning(f"LLM refinement failed: {e}")
+                tray.notify(messages.ERROR_OLLAMA_UNAVAILABLE)
+            except TimeoutError as e:
+                logger.warning(f"LLM refinement timed out: {e}")
+                tray.notify(messages.ERROR_OLLAMA_UNAVAILABLE)
+            except Exception as e:
+                logger.warning(f"LLM refinement failed: {e}")
+                tray.notify(messages.ERROR_OLLAMA_UNAVAILABLE)
+        elif _cfg.refine and not _health["ollama"]:
+            logger.info("Skipping refinement - Ollama unavailable")
+        try:
+            injector.inject(text, _cfg.injection_delay)
+        except Exception as e:
+            logger.warning(f"Injection failed: {e}")
+            pyperclip = __import__("pyperclip")
+            pyperclip.copy(text)
+            tray.notify(messages.ERROR_INJECTION_FAILED)
         tray.set_status("idle")
-        return
-    tray.set_status("processing")
-    audio = vad.trim_silence(audio, threshold=_cfg.vad_threshold)
-    if not audio:
-        tray.set_status("idle")
-        return
-    text = stt_engine.transcribe(audio)
-    if _cfg.refine:
-        text = llm_client.refine(text, "clean_up", _cfg.model)
-    injector.inject(text)
-    tray.set_status("idle")
+    except (requests.ConnectionError, requests.Timeout) as e:
+        logger.error(f"VibeVoice unavailable: {e}")
+        tray.set_status("error")
+        tray.notify(messages.ERROR_VIBEVOICE_UNAVAILABLE)
+    except Exception as e:
+        logger.exception(f"Transcription failed: {e}")
+        tray.set_status("error")
+        tray.notify(messages.ERROR_TRANSCRIPTION_FAILED)
 
 
 def _on_transcribe_file() -> None:
@@ -57,16 +91,41 @@ def _on_transcribe_file() -> None:
     )
     if not path_str:
         return
-    path = Path(path_str)
-    tray.set_status("processing")
-    audio = reader.read_file(path)
-    text = stt_engine.transcribe(audio)
-    if _cfg.refine:
-        text = llm_client.refine(text, "clean_up", _cfg.model)
-    injector.inject(text)
-    out_path = exporter.save_transcript(text, path)
-    tray.notify(f"Done - transcript saved to {out_path.name}")
-    tray.set_status("idle")
+    try:
+        path = Path(path_str)
+        tray.set_status("processing")
+        audio = reader.read_file(path)
+        if not audio:
+            tray.set_status("error")
+            tray.notify(messages.ERROR_FILE_READ_FAILED)
+            return
+        text = stt_engine.transcribe(audio)
+        if _cfg.refine and _health["ollama"]:
+            try:
+                future = llm_client.refine_async(text, "clean_up", _cfg.model, _cfg.llm_timeout)
+                text = future.result(timeout=_cfg.llm_timeout + 5)
+            except Exception as e:
+                logger.warning(f"LLM refinement failed: {e}")
+        elif _cfg.refine and not _health["ollama"]:
+            logger.info("Skipping refinement - Ollama unavailable")
+        try:
+            injector.inject(text, _cfg.injection_delay)
+        except Exception as e:
+            logger.warning(f"Injection failed: {e}")
+            pyperclip = __import__("pyperclip")
+            pyperclip.copy(text)
+            tray.notify(messages.ERROR_INJECTION_FAILED)
+        out_path = exporter.save_transcript(text, path)
+        tray.notify(messages.INFO_TRANSCRIPTION_COMPLETE)
+        tray.set_status("idle")
+    except (requests.ConnectionError, requests.Timeout) as e:
+        logger.error(f"VibeVoice unavailable: {e}")
+        tray.set_status("error")
+        tray.notify(messages.ERROR_VIBEVOICE_UNAVAILABLE)
+    except Exception as e:
+        logger.exception(f"File transcription failed: {e}")
+        tray.set_status("error")
+        tray.notify(messages.ERROR_TRANSCRIPTION_FAILED)
 
 
 def _on_open_settings() -> None:
@@ -79,14 +138,61 @@ def _on_open_settings() -> None:
 
 
 def _on_quit() -> None:
+    global _health_monitor_running
+    _health_monitor_running = False
     hotkey_daemon.stop()
     tray.stop()
 
 
+def _check_health() -> dict[str, bool]:
+    health = {"vibevoice": False, "ollama": False}
+    try:
+        resp = requests.get("http://localhost:11434/api/tags", timeout=5)
+        health["ollama"] = resp.status_code == 200
+    except (requests.ConnectionError, requests.Timeout):
+        health["ollama"] = False
+    if vibevoice_local.is_available():
+        health["vibevoice"] = True
+    else:
+        try:
+            resp = requests.get("http://localhost:8000/v1/models", timeout=5)
+            health["vibevoice"] = resp.status_code == 200
+        except (requests.ConnectionError, requests.Timeout):
+            health["vibevoice"] = False
+    return health
+
+
+_health_monitor_running = True
+
+
+def _periodic_health_check(interval: int = 60) -> None:
+    global _health, _health_monitor_running
+    while _health_monitor_running:
+        _health = _check_health()
+        logger.debug(f"Periodic health: vibevoice={_health['vibevoice']}, ollama={_health['ollama']}")
+        threading.Event().wait(interval)
+
+
 def main() -> None:
-    global _cfg
+    global _cfg, _health
     _cfg = cfg_module.load()
-    stt_engine.set_backend(vibevoice.transcribe)
+
+    if vibevoice_local.is_available():
+        stt_engine.set_backend(vibevoice_local.transcribe)
+        logger.info("Using local VibeVoice (Transformers)")
+    else:
+        stt_engine.set_backend(vibevoice.transcribe)
+        logger.info("Using HTTP VibeVoice (vLLM)")
+
+    _health = _check_health()
+
+    if not _health["vibevoice"] and not vibevoice_local.is_available():
+        logger.warning("VibeVoice not available at startup")
+    if not _health["ollama"] and _cfg.refine:
+        logger.warning("Ollama not available - refinement disabled")
+
+    monitor_thread = threading.Thread(target=_periodic_health_check, daemon=True)
+    monitor_thread.start()
 
     hotkey_daemon.register_ptt(
         _cfg.hotkey.split("+")[-1],

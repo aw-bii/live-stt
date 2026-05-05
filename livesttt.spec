@@ -1,16 +1,29 @@
+# -*- mode: python ; coding: utf-8 -*-
+
 block_cipher = None
 
 a = Analysis(
     ['src/livesttt/__main__.py'],
-    pathex=['.'],
+    pathex=[],
     binaries=[],
-    datas=[],
+    datas=[
+        ('src/livesttt', 'livesttt'),
+    ],
     hiddenimports=[
-        'pystray._win32',
-        'PIL._tkinter_finder',
-        'win32api',
-        'win32con',
-        'win32gui',
+        'cv2',
+        'PIL',
+        'pystray',
+        'pyautogui',
+        'pyperclip',
+        'sounddevice',
+        'numpy',
+        'pydub',
+        'requests',
+        'loguru',
+        'transformers',
+        'torch',
+        'scipy',
+        'scipy.signal',
     ],
     hookspath=[],
     hooksconfig={},
@@ -21,7 +34,9 @@ a = Analysis(
     cipher=block_cipher,
     noarchive=False,
 )
+
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+
 exe = EXE(
     pyz,
     a.scripts,

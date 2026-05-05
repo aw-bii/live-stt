@@ -30,6 +30,15 @@ def test_inject_sleeps_before_paste():
     assert sleep_calls[0] > 0
 
 
+def test_inject_uses_custom_delay():
+    sleep_calls = []
+    with patch("pyperclip.copy"), \
+         patch("pyautogui.hotkey"), \
+         patch("time.sleep", side_effect=sleep_calls.append):
+        injector.inject("text", delay=0.1)
+    assert sleep_calls[0] == 0.1
+
+
 def test_inject_empty_string():
     with patch("pyperclip.copy") as mock_copy, \
          patch("pyautogui.hotkey"), \

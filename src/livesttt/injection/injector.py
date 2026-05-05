@@ -2,10 +2,8 @@ import time
 import pyperclip
 import pyautogui
 
-_PASTE_DELAY = 0.05
 
-
-def inject(text: str) -> None:
+def inject(text: str, delay: float = 0.05) -> None:
     pyperclip.copy(text)
-    time.sleep(_PASTE_DELAY)
+    time.sleep(delay)
     pyautogui.hotkey("ctrl", "v")

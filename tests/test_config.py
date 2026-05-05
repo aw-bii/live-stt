@@ -46,3 +46,46 @@ def test_cancel_hotkey_round_trips(tmp_path, monkeypatch):
     config.save(cfg)
     loaded = config.load()
     assert loaded.cancel_hotkey == "ctrl+z"
+
+
+def test_load_invalid_hotkey_defaults(tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "CONFIG_PATH", tmp_path / "config.json")
+    (tmp_path / "config.json").write_text('{"hotkey": ""}')
+    loaded = config.load()
+    assert loaded.hotkey == "ctrl+shift+space"
+
+
+def test_load_invalid_vad_threshold_defaults(tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "CONFIG_PATH", tmp_path / "config.json")
+    (tmp_path / "config.json").write_text('{"vad_threshold": 2.0}')
+    loaded = config.load()
+    assert loaded.vad_threshold == 0.02
+
+
+def test_load_invalid_vad_threshold_negative(tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "CONFIG_PATH", tmp_path / "config.json")
+    (tmp_path / "config.json").write_text('{"vad_threshold": -0.5}')
+    loaded = config.load()
+    assert loaded.vad_threshold == 0.02
+
+
+def test_load_invalid_refine_defaults(tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "CONFIG_PATH", tmp_path / "config.json")
+    (tmp_path / "config.json").write_text('{"refine": "yes"}')
+    loaded = config.load()
+    assert loaded.refine is True
+
+
+def test_load_invalid_json_returns_defaults(tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "CONFIG_PATH", tmp_path / "config.json")
+    (tmp_path / "config.json").write_text("not valid json")
+    loaded = config.load()
+    assert loaded == config.Config()
+
+
+def test_load_partial_valid_data(tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "CONFIG_PATH", tmp_path / "config.json")
+    (tmp_path / "config.json").write_text('{"hotkey": "ctrl+b"}')
+    loaded = config.load()
+    assert loaded.hotkey == "ctrl+b"
+    assert loaded.model == "gemma4"

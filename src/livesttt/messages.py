@@ -1,0 +1,10 @@
+ERROR_VIBEVOICE_UNAVAILABLE = "VibeVoice unavailable - check installation"
+ERROR_OLLAMA_UNAVAILABLE = "Refinement unavailable - start Ollama to enable"
+ERROR_INJECTION_FAILED = "Injection failed - copied to clipboard instead"
+ERROR_TRANSCRIPTION_FAILED = "Transcription failed - check audio input"
+ERROR_AUDIO_CAPTURE_FAILED = "Audio capture failed - check microphone"
+ERROR_FILE_READ_FAILED = "Could not read audio file"
+
+INFO_TRANSCRIPTION_COMPLETE = "Transcription complete"
+INFO_SKIPPED_REFINEMENT = "Refinement skipped - Ollama unavailable"
+INFO_COPIED_TO_CLIPBOARD = "Copied to clipboard"

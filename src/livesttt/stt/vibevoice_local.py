@@ -1,0 +1,47 @@
+import io
+import wave
+from typing import Optional
+
+import numpy as np
+
+_MODEL_ID = "microsoft/VibeVoice-ASR-HF"
+_processor: Optional["AutoProcessor"] = None
+_model: Optional["VibeVoiceAsrForConditionalGeneration"] = None
+
+
+def _get_model():
+    global _processor, _model
+    if _processor is None:
+        from transformers import AutoProcessor, VibeVoiceAsrForConditionalGeneration
+
+        _processor = AutoProcessor.from_pretrained(_MODEL_ID)
+        _model = VibeVoiceAsrForConditionalGeneration.from_pretrained(
+            _MODEL_ID, device_map="auto"
+        )
+    return _processor, _model
+
+
+def transcribe(audio_bytes: bytes) -> str:
+    processor, model = _get_model()
+
+    with wave.open(io.BytesIO(audio_bytes), "rb") as wf:
+        if wf.getnchannels() != 1:
+            raise ValueError("Audio must be mono")
+        audio_data = wf.readframes(wf.getnframes())
+
+    audio = np.frombuffer(audio_data, dtype=np.int16).astype(np.float32) / 32768.0
+
+    inputs = processor.apply_transcription_request(
+        audio=audio, return_format="transcription_only"
+    ).to(model.device)
+
+    output_ids = model.generate(**inputs)
+    return processor.decode(output_ids[0], skip_special_tokens=True)
+
+
+def is_available() -> bool:
+    try:
+        _get_model()
+        return True
+    except Exception:
+        return False

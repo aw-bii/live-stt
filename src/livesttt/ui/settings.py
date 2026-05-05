@@ -60,30 +60,60 @@ def open_settings(cfg: Config, on_save: Callable[[Config], None]) -> None:
     win.title("live-stt settings")
     win.resizable(False, False)
 
-    tk.Label(win, text="Hotkey:").grid(row=0, column=0, padx=8, pady=4, sticky="w")
-    hotkey_capture = _HotkeyCapture(win, value=cfg.hotkey)
-    hotkey_capture.grid(row=0, column=1, padx=8)
+    row = 0
 
-    tk.Label(win, text="Model:").grid(row=1, column=0, padx=8, pady=4, sticky="w")
+    tk.Label(win, text="Push-to-talk:").grid(row=row, column=0, padx=8, pady=4, sticky="w")
+    hotkey_capture = _HotkeyCapture(win, value=cfg.hotkey)
+    hotkey_capture.grid(row=row, column=1, padx=8)
+    row += 1
+
+    tk.Label(win, text="Cancel:").grid(row=row, column=0, padx=8, pady=4, sticky="w")
+    cancel_capture = _HotkeyCapture(win, value=cfg.cancel_hotkey)
+    cancel_capture.grid(row=row, column=1, padx=8)
+    row += 1
+
+    tk.Label(win, text="LLM Model:").grid(row=row, column=0, padx=8, pady=4, sticky="w")
     model_var = tk.StringVar(value=cfg.model)
-    tk.Entry(win, textvariable=model_var, width=24).grid(row=1, column=1, padx=8)
+    tk.Entry(win, textvariable=model_var, width=24).grid(row=row, column=1, padx=8)
+    row += 1
 
     refine_var = tk.BooleanVar(value=cfg.refine)
     tk.Checkbutton(win, text="Refine with LLM", variable=refine_var).grid(
-        row=2, column=0, columnspan=2, padx=8, pady=4, sticky="w"
+        row=row, column=0, columnspan=2, padx=8, pady=4, sticky="w"
     )
+    row += 1
+
+    tk.Label(win, text="VAD Threshold:").grid(row=row, column=0, padx=8, pady=4, sticky="w")
+    vad_var = tk.DoubleVar(value=cfg.vad_threshold)
+    vad_scale = tk.Scale(win, from_=0.0, to=0.5, resolution=0.01, variable=vad_var, orient="horizontal", length=150)
+    vad_scale.grid(row=row, column=1, padx=8, sticky="w")
+    row += 1
+
+    tk.Label(win, text="LLM Timeout (s):").grid(row=row, column=0, padx=8, pady=4, sticky="w")
+    llm_timeout_var = tk.IntVar(value=cfg.llm_timeout)
+    tk.Entry(win, textvariable=llm_timeout_var, width=8).grid(row=row, column=1, padx=8, sticky="w")
+    row += 1
+
+    tk.Label(win, text="Injection Delay (s):").grid(row=row, column=0, padx=8, pady=4, sticky="w")
+    injection_delay_var = tk.DoubleVar(value=cfg.injection_delay)
+    tk.Entry(win, textvariable=injection_delay_var, width=8).grid(row=row, column=1, padx=8, sticky="w")
+    row += 1
 
     def _save() -> None:
         updated = Config(
             hotkey=hotkey_capture.get(),
+            cancel_hotkey=cancel_capture.get(),
             model=model_var.get().strip(),
             refine=refine_var.get(),
-            vad_threshold=cfg.vad_threshold,
+            vad_threshold=vad_var.get(),
+            stt_timeout=cfg.stt_timeout,
+            llm_timeout=llm_timeout_var.get(),
+            injection_delay=injection_delay_var.get(),
         )
         on_save(updated)
         win.destroy()
 
     tk.Button(win, text="Save", command=_save).grid(
-        row=3, column=0, columnspan=2, pady=8
+        row=row, column=0, columnspan=2, pady=8
     )
     win.mainloop()

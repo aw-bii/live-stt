@@ -18,6 +18,9 @@ dependencies = [
     "pyperclip>=1.8",
     "pyautogui>=0.9",
     "requests>=2.31",
+    "transformers>=4.50",
+    "torch>=2.0",
+    "loguru>=0.7",
 ]
 
 [project.optional-dependencies]

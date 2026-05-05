@@ -23,7 +23,7 @@ def _pcm_to_wav(pcm_bytes: bytes) -> bytes:
     return buf.getvalue()
 
 
-def transcribe(audio: bytes) -> str:
+def transcribe(audio: bytes, timeout: int = 60) -> str:
     wav_bytes = _pcm_to_wav(audio)
     audio_b64 = base64.b64encode(wav_bytes).decode("utf-8")
     payload = {
@@ -52,7 +52,7 @@ def transcribe(audio: bytes) -> str:
         "stream": True,
         "top_p": 1.0,
     }
-    resp = requests.post(VIBEVOICE_URL, json=payload, stream=True, timeout=60)
+    resp = requests.post(VIBEVOICE_URL, json=payload, stream=True, timeout=timeout)
     resp.raise_for_status()
 
     accumulated = ""
