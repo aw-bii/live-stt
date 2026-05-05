@@ -51,7 +51,8 @@ class _HotkeyCapture(tk.Frame):
         return "break"
 
     def get(self) -> str:
-        return self._var.get()
+        v = self._var.get()
+        return self._prev if v == "Press hotkey..." else v
 
 
 def open_settings(cfg: Config, on_save: Callable[[Config], None]) -> None:
