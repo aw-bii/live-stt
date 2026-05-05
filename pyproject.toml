@@ -1,0 +1,30 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "live-stt"
+version = "0.1.0"
+description = "Local voice dictation powered by VibeVoice and Gemma 4"
+requires-python = ">=3.10"
+dependencies = [
+    "sounddevice==0.5.5",
+    "numpy>=1.24",
+    "pydub>=0.25",
+    "pystray>=0.19",
+    "Pillow>=10.0",
+    "keyboard>=0.13",
+    "pywin32>=306",
+    "pyperclip>=1.8",
+    "pyautogui>=0.9",
+    "requests>=2.31",
+]
+
+[project.optional-dependencies]
+dev = ["pytest==8.3.5", "pytest-mock==3.15.0"]
+
+[project.scripts]
+livesttt = "livesttt.__main__:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/livesttt"]
