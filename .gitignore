@@ -9,3 +9,6 @@ build/
 *.spec
 .env
 *.log
+.claude/
+graphify-out/
+.graphify_python

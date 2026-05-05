@@ -6,6 +6,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a local, offline voice-dictation app inspired by Wispr Flow. It captures microphone audio, transcribes speech using VibeVoice (local STT), optionally refines the text with Gemma 4 (local LLM), and injects the result into whatever window the user has focused - system-wide, without any cloud dependency.
 
+## Key Documentation
+
+For comprehensive understanding of the project, refer to:
+- **PRODUCT.md** - Product requirements, vision, and user stories
+- **ARCHITECTURE.md** - Detailed system architecture and component design
+- **AGENTS.md** - Agent configurations, responsibilities, and communication patterns
+- **DESIGN.md** - Design specifications and guidelines
+
 ## Style Rules
 
 - Never use em-dashes (--) in any text output, comments, docs, or UI strings. Use a hyphen (-), colon (:), or reword instead.
@@ -60,15 +68,36 @@ This is a local, offline voice-dictation app inspired by Wispr Flow. It captures
 python -m venv .venv
 .venv\Scripts\activate
 
-# Install dependencies (once requirements.txt exists)
-pip install -r requirements.txt
+# Install dependencies
+pip install -e .
 
 # Run the app
-python main.py
+.venv\Scripts\python.exe -m livesttt
 
-# Run tests
-pytest tests/
+# Run tests (must use venv Python - system Python 3.14 breaks pydub)
+.venv\Scripts\python.exe -m pytest tests/
 ```
+
+## Project Entry Point
+
+The application entry point is `src/livesttt/__main__.py` which initializes and runs all agents. To run the application directly:
+```bash
+python src\livesttt\__main__.py
+```
+
+## Project Structure
+
+- `src/livesttt/` - Main source code organized by agent modules
+  - `audio/` - Audio capture and VAD
+  - `stt/` - Speech-to-text processing
+  - `llm/` - LLM refinement via Ollama
+  - `injection/` - Text injection and export
+  - `hotkeys/` - Global hotkey management
+  - `ui/` - System tray and settings interface
+  - `config.py` - Centralized configuration
+- `tests/` - Test suite
+- `docs/` - Additional documentation and specifications
+- `graphify-out/` - Knowledge graph for codebase understanding
 
 ## Ollama / Gemma 4
 
