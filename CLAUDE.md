@@ -1,0 +1,78 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project Overview
+
+This is a local, offline voice-dictation app inspired by Wispr Flow. It captures microphone audio, transcribes speech using VibeVoice (local STT), optionally refines the text with Gemma 4 (local LLM), and injects the result into whatever window the user has focused — system-wide, without any cloud dependency.
+
+## Target Stack
+
+- **Language**: Python (primary runtime)
+- **STT**: VibeVoice — local speech-to-text engine
+- **LLM post-processing**: Gemma 4 via Ollama (or llama.cpp) — cleans up filler words, formats punctuation, rewrites for context
+- **Audio capture**: `sounddevice` or `pyaudio` for real-time microphone input
+- **System integration (Windows)**: `pywin32` / `pygetwindow` for active-window detection; `pyperclip` + simulated keystrokes (`pyautogui`) for text injection
+- **Hotkey daemon**: `keyboard` library for global push-to-talk or toggle shortcut
+- **UI** (optional tray): `pystray` + `Pillow` for a system-tray icon
+
+## Architecture
+
+```
+┌──────────────┐     audio      ┌──────────────┐    raw text    ┌──────────────┐
+│  Hotkey /    │ ─────────────► │  VibeVoice   │ ─────────────► │  Gemma 4     │
+│  Audio Loop  │                │  STT Engine  │                │  Refinement  │
+└──────────────┘                └──────────────┘                └──────────────┘
+                                                                       │
+                                                               refined text
+                                                                       │
+                                                                       ▼
+                                                          ┌────────────────────┐
+                                                          │  Text Injector     │
+                                                          │  (active window)   │
+                                                          └────────────────────┘
+```
+
+- **`audio/`** — microphone capture, VAD (voice activity detection), chunking
+- **`stt/`** — VibeVoice wrapper; accepts audio bytes, returns transcript string
+- **`llm/`** — Gemma 4 client (Ollama HTTP or subprocess); prompt templates for clean-up vs. rewrite modes
+- **`injection/`** — clipboard-based text injection + optional direct keystroke injection
+- **`hotkeys/`** — global hotkey registration (push-to-talk, toggle, cancel)
+- **`ui/`** — system-tray icon, status indicator, settings window
+- **`config.py`** — single source for user settings (hotkey, model name, refinement prompt, VAD threshold)
+
+## Key Design Decisions
+
+- **Offline-first**: no network calls in the hot path; Ollama must be running locally
+- **Push-to-talk by default**: hold a key → record → release → transcribe → inject
+- **Refinement is optional**: STT output can be injected raw; LLM pass is a toggle in config
+- **Windows-first**: text injection uses the clipboard + `Ctrl+V` simulation; active-window detection via Win32 API
+
+## Development Setup
+
+```bash
+# Create and activate virtualenv
+python -m venv .venv
+.venv\Scripts\activate
+
+# Install dependencies (once requirements.txt exists)
+pip install -r requirements.txt
+
+# Run the app
+python main.py
+
+# Run tests
+pytest tests/
+```
+
+## Ollama / Gemma 4
+
+```bash
+# Pull the model (one-time)
+ollama pull gemma4
+
+# Confirm it's running
+ollama run gemma4 "hello"
+```
+
+The LLM client should call `http://localhost:11434/api/generate` (Ollama default).
