@@ -1,6 +1,4 @@
 from __future__ import annotations
-import threading
-import tkinter
 from typing import Callable
 import pystray
 from PIL import Image, ImageDraw
@@ -39,3 +37,8 @@ def run(
     )
     _icon = pystray.Icon("livesttt", _make_icon("green"), "live-stt", menu)
     _icon.run()
+
+
+def stop() -> None:
+    if _icon:
+        _icon.stop()
