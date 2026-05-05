@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Local voice dictation powered by VibeVoice and Gemma 4"
 requires-python = ">=3.10"
 dependencies = [
-    "sounddevice==0.5.5",
+    "sounddevice>=0.4",
     "numpy>=1.24",
     "pydub>=0.25",
     "pystray>=0.19",
@@ -21,7 +21,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest==8.3.5", "pytest-mock==3.15.0"]
+dev = ["pytest>=7", "pytest-mock>=3"]
 
 [project.scripts]
 livesttt = "livesttt.__main__:main"
