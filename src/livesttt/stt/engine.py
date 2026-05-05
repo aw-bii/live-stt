@@ -1,8 +1,5 @@
 from typing import Callable
 
-# Plug in the VibeVoice transcription function here at app startup:
-#   from vibeVoice import transcribe as vv_transcribe
-#   engine.set_backend(vv_transcribe)
 _backend: Callable[[bytes], str] | None = None
 
 

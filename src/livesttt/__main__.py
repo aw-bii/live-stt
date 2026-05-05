@@ -5,7 +5,7 @@ from pathlib import Path
 
 from livesttt import config as cfg_module
 from livesttt.audio import capture, vad, reader
-from livesttt.stt import engine as stt_engine
+from livesttt.stt import engine as stt_engine, vibevoice
 from livesttt.llm import client as llm_client
 from livesttt.injection import injector, exporter
 from livesttt.hotkeys import daemon as hotkey_daemon
@@ -75,10 +75,7 @@ def _on_quit() -> None:
 def main() -> None:
     global _cfg
     _cfg = cfg_module.load()
-
-    # Wire up VibeVoice here once the library is available:
-    # from vibeVoice import transcribe as vv_transcribe
-    # stt_engine.set_backend(vv_transcribe)
+    stt_engine.set_backend(vibevoice.transcribe)
 
     hotkey_daemon.register_ptt(
         _cfg.hotkey.split("+")[-1],
