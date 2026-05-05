@@ -8,6 +8,7 @@ CONFIG_PATH = Path.home() / ".livesttt" / "config.json"
 @dataclass
 class Config:
     hotkey: str = "ctrl+shift+space"
+    cancel_hotkey: str = "escape"
     model: str = "gemma4"
     refine: bool = True
     vad_threshold: float = 0.02

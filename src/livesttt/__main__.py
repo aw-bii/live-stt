@@ -13,9 +13,11 @@ from livesttt.ui import tray, settings
 
 _cfg = cfg_module.Config()
 _stop_event = threading.Event()
+_cancel_event = threading.Event()
 
 
 def _on_ptt_press() -> None:
+    _cancel_event.clear()
     _stop_event.clear()
     tray.set_status("recording")
     thread = threading.Thread(target=_capture_and_process, daemon=True)
@@ -26,8 +28,16 @@ def _on_ptt_release() -> None:
     _stop_event.set()
 
 
+def _on_cancel() -> None:
+    _cancel_event.set()
+    _stop_event.set()
+
+
 def _capture_and_process() -> None:
     audio = capture.start_recording(_stop_event)
+    if _cancel_event.is_set():
+        tray.set_status("idle")
+        return
     tray.set_status("processing")
     audio = vad.trim_silence(audio, threshold=_cfg.vad_threshold)
     if not audio:
@@ -83,6 +93,7 @@ def main() -> None:
         on_press=_on_ptt_press,
         on_release=_on_ptt_release,
     )
+    hotkey_daemon.register(_cfg.cancel_hotkey, _on_cancel)
 
     tray.run(
         cfg=_cfg,

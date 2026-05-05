@@ -33,3 +33,16 @@ def test_save_creates_parent_dir(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "CONFIG_PATH", target)
     config.save(config.Config())
     assert target.exists()
+
+
+def test_default_cancel_hotkey():
+    cfg = config.Config()
+    assert cfg.cancel_hotkey == "escape"
+
+
+def test_cancel_hotkey_round_trips(tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "CONFIG_PATH", tmp_path / "config.json")
+    cfg = config.Config(cancel_hotkey="ctrl+z")
+    config.save(cfg)
+    loaded = config.load()
+    assert loaded.cancel_hotkey == "ctrl+z"
