@@ -1,5 +1,7 @@
+from pathlib import Path
 from unittest.mock import patch, call, MagicMock
 from livesttt.injection import injector
+from livesttt.injection import exporter
 
 
 def test_inject_copies_text_to_clipboard():
@@ -34,3 +36,27 @@ def test_inject_empty_string():
          patch("time.sleep"):
         injector.inject("")
     mock_copy.assert_called_once_with("")
+
+
+def test_save_transcript_creates_txt_next_to_source(tmp_path):
+    audio = tmp_path / "meeting.wav"
+    audio.touch()
+    out = exporter.save_transcript("hello world", audio)
+    assert out == tmp_path / "meeting.txt"
+    assert out.read_text(encoding="utf-8") == "hello world"
+
+
+def test_save_transcript_returns_output_path(tmp_path):
+    audio = tmp_path / "clip.mp3"
+    audio.touch()
+    result = exporter.save_transcript("transcript text", audio)
+    assert isinstance(result, Path)
+    assert result.suffix == ".txt"
+
+
+def test_save_transcript_overwrites_existing(tmp_path):
+    audio = tmp_path / "clip.wav"
+    audio.touch()
+    exporter.save_transcript("first", audio)
+    exporter.save_transcript("second", audio)
+    assert (tmp_path / "clip.txt").read_text(encoding="utf-8") == "second"
