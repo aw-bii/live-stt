@@ -54,7 +54,8 @@ def _on_transcribe_file() -> None:
     if _cfg.refine:
         text = llm_client.refine(text, "clean_up", _cfg.model)
     injector.inject(text)
-    exporter.save_transcript(text, path)
+    out_path = exporter.save_transcript(text, path)
+    tray.notify(f"Done - transcript saved to {out_path.name}")
     tray.set_status("idle")
 
 

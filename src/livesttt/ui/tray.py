@@ -39,6 +39,11 @@ def run(
     _icon.run()
 
 
+def notify(message: str) -> None:
+    if _icon:
+        _icon.notify(message, "live-stt")
+
+
 def stop() -> None:
     if _icon:
         _icon.stop()
