@@ -138,8 +138,7 @@ def _on_open_settings() -> None:
 
 
 def _on_quit() -> None:
-    global _health_monitor_running
-    _health_monitor_running = False
+    _quit_event.set()
     hotkey_daemon.stop()
     tray.stop()
 
@@ -162,15 +161,15 @@ def _check_health() -> dict[str, bool]:
     return health
 
 
-_health_monitor_running = True
+_quit_event = threading.Event()
 
 
 def _periodic_health_check(interval: int = 60) -> None:
-    global _health, _health_monitor_running
-    while _health_monitor_running:
+    global _health
+    while not _quit_event.is_set():
         _health = _check_health()
         logger.debug(f"Periodic health: vibevoice={_health['vibevoice']}, ollama={_health['ollama']}")
-        threading.Event().wait(interval)
+        _quit_event.wait(interval)
 
 
 def main() -> None:
