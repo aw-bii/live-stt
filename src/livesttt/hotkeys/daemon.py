@@ -1,4 +1,4 @@
-from typing import Callable
+﻿from typing import Callable
 import keyboard
 
 
@@ -7,12 +7,12 @@ def register(hotkey: str, callback: Callable[[], None]) -> None:
 
 
 def register_ptt(
-    key: str,
+    hotkey: str,
     on_press: Callable[[], None],
     on_release: Callable[[], None],
 ) -> None:
-    keyboard.on_press_key(key, lambda _: on_press(), suppress=True)
-    keyboard.on_release_key(key, lambda _: on_release(), suppress=True)
+    keyboard.add_hotkey(hotkey, on_press, suppress=True, trigger_on_release=False)
+    keyboard.add_hotkey(hotkey, on_release, suppress=True, trigger_on_release=True)
 
 
 def stop() -> None:

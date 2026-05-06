@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 import threading
 import tkinter.filedialog
 from pathlib import Path
@@ -195,7 +195,7 @@ def main() -> None:
     monitor_thread.start()
 
     hotkey_daemon.register_ptt(
-        _cfg.hotkey.split("+")[-1],
+        _cfg.hotkey,
         on_press=_on_ptt_press,
         on_release=_on_ptt_release,
     )
@@ -211,3 +211,5 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
