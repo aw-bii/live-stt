@@ -41,7 +41,7 @@ def transcribe(audio_bytes: bytes) -> str:
 
 def is_available() -> bool:
     try:
-        _get_model()
+        import transformers  # noqa: F401
         return True
-    except Exception:
+    except ImportError:
         return False
