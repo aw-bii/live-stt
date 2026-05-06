@@ -20,3 +20,7 @@ def refine(text: str, mode: str, model: str, timeout: int = 30) -> str:
 
 def refine_async(text: str, mode: str, model: str, timeout: int = 30) -> Future:
     return _executor.submit(refine, text, mode, model, timeout)
+
+
+def shutdown() -> None:
+    _executor.shutdown(cancel_futures=True)

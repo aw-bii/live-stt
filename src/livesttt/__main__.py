@@ -144,6 +144,7 @@ def _on_open_settings() -> None:
 
 def _on_quit() -> None:
     _quit_event.set()
+    llm_client.shutdown()
     hotkey_daemon.stop()
     tray.stop()
 
