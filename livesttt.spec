@@ -4,10 +4,11 @@ block_cipher = None
 
 a = Analysis(
     ['src/livesttt/__main__.py'],
-    pathex=[],
+    pathex=['src'],
     binaries=[],
     datas=[
         ('src/livesttt', 'livesttt'),
+        (r'.venv\Lib\site-packages\_sounddevice_data', '_sounddevice_data'),
     ],
     hiddenimports=[
         'cv2',
@@ -24,6 +25,14 @@ a = Analysis(
         'torch',
         'scipy',
         'scipy.signal',
+        'pystray._win32',
+        'PIL._tkinter_finder',
+        'win32api',
+        'win32con',
+        'win32gui',
+        'pythoncom',
+        'pywintypes',
+        'pyautogui._pyautogui_win',
     ],
     hookspath=[],
     hooksconfig={},
@@ -49,7 +58,7 @@ exe = EXE(
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    upx_exclude=[],
+    upx_exclude=['pywintypes*.dll', 'vcruntime*.dll'],
     runtime_tmpdir=None,
     console=False,
     disable_windowed_traceback=False,
