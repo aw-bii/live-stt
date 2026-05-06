@@ -13,9 +13,6 @@ def test_is_available_returns_false_when_import_fails():
 def test_is_available_returns_true_when_model_loads():
     mock_processor = MagicMock()
     mock_model = MagicMock()
-    with patch("transformers.AutoProcessor") as mock_proc_cls, \
-         patch("transformers.VibeVoiceAsrForConditionalGeneration") as mock_model_cls:
-        mock_proc_cls.from_pretrained.return_value = mock_processor
-        mock_model_cls.from_pretrained.return_value = mock_model
+    with patch("livesttt.stt.vibevoice_local._get_model", return_value=(mock_processor, mock_model)):
         result = vibevoice_local.is_available()
     assert result is True
