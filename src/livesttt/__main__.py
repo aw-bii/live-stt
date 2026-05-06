@@ -20,6 +20,7 @@ _cfg = cfg_module.Config()
 _stop_event = threading.Event()
 _cancel_event = threading.Event()
 _health = {"vibevoice": False, "ollama": False}
+_health_lock = threading.Lock()
 
 
 def _on_ptt_press() -> None:
@@ -40,6 +41,8 @@ def _on_cancel() -> None:
 
 
 def _capture_and_process() -> None:
+    with _health_lock:
+        health = _health.copy()
     try:
         audio = capture.start_recording(_stop_event)
         if _cancel_event.is_set():
@@ -51,7 +54,7 @@ def _capture_and_process() -> None:
             tray.set_status("idle")
             return
         text = stt_engine.transcribe(audio)
-        if _cfg.refine and _health["ollama"]:
+        if _cfg.refine and health["ollama"]:
             try:
                 future = llm_client.refine_async(text, "clean_up", _cfg.model, _cfg.llm_timeout)
                 text = future.result(timeout=_cfg.llm_timeout + 5)
@@ -64,7 +67,7 @@ def _capture_and_process() -> None:
             except Exception as e:
                 logger.warning(f"LLM refinement failed: {e}")
                 tray.notify(messages.ERROR_OLLAMA_UNAVAILABLE)
-        elif _cfg.refine and not _health["ollama"]:
+        elif _cfg.refine and not health["ollama"]:
             logger.info("Skipping refinement - Ollama unavailable")
         try:
             injector.inject(text, _cfg.injection_delay)
@@ -91,6 +94,8 @@ def _on_transcribe_file() -> None:
     )
     if not path_str:
         return
+    with _health_lock:
+        health = _health.copy()
     try:
         path = Path(path_str)
         tray.set_status("processing")
@@ -100,13 +105,13 @@ def _on_transcribe_file() -> None:
             tray.notify(messages.ERROR_FILE_READ_FAILED)
             return
         text = stt_engine.transcribe(audio)
-        if _cfg.refine and _health["ollama"]:
+        if _cfg.refine and health["ollama"]:
             try:
                 future = llm_client.refine_async(text, "clean_up", _cfg.model, _cfg.llm_timeout)
                 text = future.result(timeout=_cfg.llm_timeout + 5)
             except Exception as e:
                 logger.warning(f"LLM refinement failed: {e}")
-        elif _cfg.refine and not _health["ollama"]:
+        elif _cfg.refine and not health["ollama"]:
             logger.info("Skipping refinement - Ollama unavailable")
         try:
             injector.inject(text, _cfg.injection_delay)
@@ -167,8 +172,10 @@ _quit_event = threading.Event()
 def _periodic_health_check(interval: int = 60) -> None:
     global _health
     while not _quit_event.is_set():
-        _health = _check_health()
-        logger.debug(f"Periodic health: vibevoice={_health['vibevoice']}, ollama={_health['ollama']}")
+        new_health = _check_health()
+        logger.debug(f"Periodic health: vibevoice={new_health['vibevoice']}, ollama={new_health['ollama']}")
+        with _health_lock:
+            _health = new_health
         _quit_event.wait(interval)
 
 
