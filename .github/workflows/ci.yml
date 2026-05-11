@@ -24,3 +24,6 @@ jobs:
 
       - name: Run tests
         run: python -m pytest tests/ -v
+
+      - name: Type check
+        run: mypy src/livesttt

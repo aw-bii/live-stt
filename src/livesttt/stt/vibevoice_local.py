@@ -1,12 +1,12 @@
 import io
 import wave
-from typing import Optional
+from typing import Any, Optional
 
 import numpy as np
 
 _MODEL_ID = "microsoft/VibeVoice-ASR-HF"
-_processor: Optional["AutoProcessor"] = None
-_model: Optional["VibeVoiceAsrForConditionalGeneration"] = None
+_processor: Optional[Any] = None
+_model: Optional[Any] = None
 
 
 def _get_model():

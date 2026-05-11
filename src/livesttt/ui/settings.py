@@ -27,7 +27,7 @@ def build_hotkey_string(state: int, keysym: str) -> str | None:
 
 
 class _HotkeyCapture(tk.Frame):
-    def __init__(self, parent: tk.Widget, value: str) -> None:
+    def __init__(self, parent: tk.Misc, value: str) -> None:
         super().__init__(parent)
         self._prev = value
         self._var = tk.StringVar(value=value)
@@ -46,7 +46,7 @@ class _HotkeyCapture(tk.Frame):
             self._var.set(self._prev)
 
     def _on_key(self, event: tk.Event) -> str:
-        result = build_hotkey_string(event.state, event.keysym)
+        result = build_hotkey_string(int(event.state), event.keysym)
         if result is not None:
             self._var.set(result)
         return "break"

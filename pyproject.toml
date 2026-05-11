@@ -26,10 +26,15 @@ local-stt = [
     "transformers>=4.50",
     "torch>=2.0",
 ]
-dev = ["pytest>=7", "pytest-mock>=3"]
+dev = ["pytest>=7", "pytest-mock>=3", "mypy>=1.0"]
 
 [project.gui-scripts]
 livesttt = "livesttt.__main__:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/livesttt"]
+
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+files = ["src/livesttt"]
