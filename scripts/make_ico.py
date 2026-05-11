@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Generate src/livesttt/assets/icon.ico from the waveform design."""
+"""Generate src/bertytype/assets/icon.ico from the waveform design."""
 from pathlib import Path
 from PIL import Image, ImageDraw
 
 _BAR_HEIGHTS_64 = [16, 32, 48, 32, 16]
 _ICON_COLOR = "#4CAF50"
-_OUT = Path(__file__).parent.parent / "src" / "livesttt" / "assets" / "icon.ico"
+_OUT = Path(__file__).parent.parent / "src" / "bertytype" / "assets" / "icon.ico"
 
 
 def _make_icon_at_size(size: int) -> Image.Image:
