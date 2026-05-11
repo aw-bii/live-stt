@@ -1,0 +1,1501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BertyType - UI Showcase</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:ital,wght@0,300;0,400;0,500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:          #080808;
+  --bg-card:     #0f0f0f;
+  --bg-surface:  #161616;
+  --bg-elevated: #1e1e1e;
+  --border:      #272727;
+  --green:       #1ed760;
+  --red:         #e84040;
+  --orange:      #ff9500;
+  --blue:        #3a9fff;
+  --text:        #f0f0f0;
+  --text-2:      #888;
+  --text-3:      #444;
+  --font-d:      'Syne', sans-serif;
+  --font-m:      'JetBrains Mono', monospace;
+  --r:           10px;
+  --r-sm:        6px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-m);
+  min-height: 100vh;
+  display: flex;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+}
+
+/* ---- SIDEBAR ---- */
+.sidebar {
+  width: 196px;
+  min-width: 196px;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  border-right: 1px solid var(--border);
+  padding: 32px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  overflow-y: auto;
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.brand-wave {
+  display: flex;
+  align-items: center;
+  gap: 2.5px;
+  height: 22px;
+}
+
+.bw-bar {
+  width: 3px;
+  border-radius: 2px;
+  background: var(--green);
+  animation: bw 1.6s ease-in-out infinite;
+}
+.bw-bar:nth-child(1) { height: 7px;  animation-delay: 0s; }
+.bw-bar:nth-child(2) { height: 13px; animation-delay: 0.12s; }
+.bw-bar:nth-child(3) { height: 19px; animation-delay: 0.24s; }
+.bw-bar:nth-child(4) { height: 13px; animation-delay: 0.12s; }
+.bw-bar:nth-child(5) { height: 7px;  animation-delay: 0s; }
+
+@keyframes bw {
+  0%, 100% { opacity: 0.4; transform: scaleY(0.6); }
+  50%       { opacity: 1;   transform: scaleY(1); }
+}
+
+.brand-name {
+  font-family: var(--font-d);
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.sidebar-nav { display: flex; flex-direction: column; gap: 22px; }
+
+.nav-group-label {
+  font-size: 8.5px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: 6px;
+}
+
+.nav-list { list-style: none; display: flex; flex-direction: column; gap: 1px; }
+
+.nav-list a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: var(--r-sm);
+  text-decoration: none;
+  color: var(--text-2);
+  font-size: 11px;
+  line-height: 1;
+  transition: all 0.12s;
+}
+.nav-list a:hover { background: var(--bg-surface); color: var(--text); }
+.nav-list a.active { background: rgba(30,215,96,0.07); color: var(--green); }
+
+.nav-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+.dot-green  { background: var(--green); }
+.dot-red    { background: var(--red); }
+.dot-orange { background: var(--orange); }
+.dot-blue   { background: var(--blue); }
+.dot-dim    { background: #333; }
+
+/* ---- MAIN ---- */
+.main { flex: 1; padding: 56px 68px; max-width: 1040px; }
+
+/* ---- HERO ---- */
+.hero {
+  margin-bottom: 68px;
+  padding-bottom: 52px;
+  border-bottom: 1px solid var(--border);
+}
+
+.hero-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(30,215,96,0.07);
+  border: 1px solid rgba(30,215,96,0.16);
+  border-radius: 100px;
+  padding: 4px 12px;
+  font-size: 9.5px;
+  color: var(--green);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+}
+
+.hero-tag-dot {
+  width: 5px; height: 5px;
+  background: var(--green);
+  border-radius: 50%;
+  animation: pdot 2.2s ease-in-out infinite;
+}
+@keyframes pdot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.35; transform: scale(0.65); }
+}
+
+.hero h1 {
+  font-family: var(--font-d);
+  font-size: 52px;
+  font-weight: 800;
+  letter-spacing: -2.5px;
+  line-height: 1;
+  margin-bottom: 14px;
+}
+.hero-accent { color: var(--green); }
+
+.hero-sub {
+  font-size: 12px;
+  color: var(--text-2);
+  line-height: 1.75;
+  max-width: 480px;
+  margin-bottom: 20px;
+}
+
+.feature-pills { display: flex; flex-wrap: wrap; gap: 7px; }
+
+.fpill {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  padding: 4px 11px;
+  font-size: 9.5px;
+  color: var(--text-2);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.fpill::before {
+  content: '';
+  width: 4px; height: 4px;
+  background: var(--green);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ---- SECTION ---- */
+.section {
+  margin-bottom: 68px;
+  scroll-margin-top: 32px;
+}
+
+.section-header {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.s-num { font-size: 10px; color: var(--green); letter-spacing: 2.5px; }
+
+.s-title {
+  font-family: var(--font-d);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.s-desc {
+  font-size: 11px;
+  color: var(--text-2);
+  line-height: 1.75;
+  margin-bottom: 24px;
+  max-width: 580px;
+}
+
+.s-desc code {
+  color: var(--green);
+  font-size: 10px;
+  font-family: var(--font-m);
+}
+
+/* ---- WINDOW FRAME ---- */
+.win {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow: hidden;
+  box-shadow: 0 20px 55px rgba(0,0,0,0.55);
+  transition: box-shadow 0.3s;
+}
+.win:hover {
+  box-shadow: 0 24px 65px rgba(0,0,0,0.65),
+              0 0 0 1px rgba(30,215,96,0.05),
+              0 0 35px rgba(30,215,96,0.05);
+}
+
+.win-bar {
+  background: var(--bg-surface);
+  height: 36px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 10px;
+  border-bottom: 1px solid var(--border);
+  user-select: none;
+}
+
+.win-btns { display: flex; gap: 5px; }
+.wb { width: 11px; height: 11px; border-radius: 50%; }
+.wb-red { background: #ff5f57; }
+.wb-yel { background: #ffbd2e; }
+.wb-grn { background: #28c840; }
+
+.win-title {
+  flex: 1;
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-2);
+  letter-spacing: 0.2px;
+}
+
+/* ---- TRAY ICON STATES ---- */
+.states-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+.state-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 22px 14px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  transition: all 0.2s;
+}
+.state-card:hover {
+  border-color: rgba(255,255,255,0.09);
+  background: var(--bg-elevated);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(0,0,0,0.3);
+}
+
+.ti-box {
+  width: 64px; height: 64px;
+  background: #080808;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+
+.ti-bar { width: 7px; border-radius: 2.5px; animation: ti-wave 1.4s ease-in-out infinite; }
+
+.state-idle      .ti-bar { background: #4CAF50; }
+.state-recording .ti-bar { background: #F44336; animation-duration: 0.42s; }
+.state-processing .ti-bar { background: #FF9800; animation-name: ti-proc; animation-duration: 0.85s; }
+.state-error     .ti-bar { background: #9E9E9E; animation: none; opacity: 0.38; }
+
+.state-idle .ti-bar:nth-child(1),
+.state-recording .ti-bar:nth-child(1),
+.state-processing .ti-bar:nth-child(1),
+.state-error .ti-bar:nth-child(1) { height: 14px; animation-delay: 0s; }
+
+.state-idle .ti-bar:nth-child(2),
+.state-recording .ti-bar:nth-child(2),
+.state-processing .ti-bar:nth-child(2),
+.state-error .ti-bar:nth-child(2) { height: 26px; animation-delay: 0.14s; }
+
+.state-idle .ti-bar:nth-child(3),
+.state-recording .ti-bar:nth-child(3),
+.state-processing .ti-bar:nth-child(3),
+.state-error .ti-bar:nth-child(3) { height: 38px; animation-delay: 0.28s; }
+
+.state-idle .ti-bar:nth-child(4),
+.state-recording .ti-bar:nth-child(4),
+.state-processing .ti-bar:nth-child(4),
+.state-error .ti-bar:nth-child(4) { height: 26px; animation-delay: 0.14s; }
+
+.state-idle .ti-bar:nth-child(5),
+.state-recording .ti-bar:nth-child(5),
+.state-processing .ti-bar:nth-child(5),
+.state-error .ti-bar:nth-child(5) { height: 14px; animation-delay: 0s; }
+
+@keyframes ti-wave {
+  0%, 100% { transform: scaleY(0.3); }
+  50%       { transform: scaleY(1); }
+}
+@keyframes ti-proc {
+  0%   { transform: scaleY(0.25); }
+  28%  { transform: scaleY(1); }
+  55%  { transform: scaleY(0.5); }
+  78%  { transform: scaleY(0.8); }
+  100% { transform: scaleY(0.25); }
+}
+
+.state-label { font-size: 9.5px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 500; }
+.l-idle       { color: #4CAF50; }
+.l-recording  { color: #F44336; }
+.l-processing { color: #FF9800; }
+.l-error      { color: #9E9E9E; }
+
+.state-note {
+  font-size: 9px;
+  color: var(--text-3);
+  text-align: center;
+  line-height: 1.55;
+}
+
+/* ---- TRAY MENU ---- */
+.tray-scene {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 0;
+  padding: 28px 24px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+}
+
+.tray-scene-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+.context-menu {
+  background: #1c1c1c;
+  border: 1px solid #323232;
+  border-radius: 8px;
+  overflow: hidden;
+  width: 210px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.75), 0 0 0 1px rgba(255,255,255,0.025);
+}
+
+.ctx-item {
+  padding: 9px 15px;
+  font-size: 12px;
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  transition: background 0.1s;
+}
+.ctx-item:hover, .ctx-item.hovered { background: rgba(255,255,255,0.06); }
+.ctx-item.danger { color: var(--text-2); }
+.ctx-item.danger:hover { color: var(--red); background: rgba(232,64,64,0.06); }
+
+.ctx-sep {
+  height: 1px;
+  background: rgba(255,255,255,0.055);
+  margin: 2px 0;
+}
+
+.ctx-icon { font-size: 13px; width: 16px; text-align: center; opacity: 0.75; }
+
+.taskbar-strip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #181818;
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+  padding: 7px 13px;
+  width: 210px;
+}
+
+.taskbar-label { font-size: 10px; color: var(--text-3); flex: 1; }
+
+.taskbar-icon {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 16px;
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 3px;
+  transition: background 0.1s;
+}
+.taskbar-icon:hover { background: rgba(255,255,255,0.06); }
+
+.tb-bar { width: 2.5px; border-radius: 1px; background: var(--green); }
+.tb-bar:nth-child(1) { height: 5px; }
+.tb-bar:nth-child(2) { height: 9px; }
+.tb-bar:nth-child(3) { height: 13px; }
+.tb-bar:nth-child(4) { height: 9px; }
+.tb-bar:nth-child(5) { height: 5px; }
+
+/* ---- SETTINGS ---- */
+.settings-win { max-width: 540px; }
+
+.settings-form { padding-bottom: 2px; }
+
+.sf-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 17px;
+  border-bottom: 1px solid rgba(255,255,255,0.032);
+  gap: 12px;
+}
+.sf-row:last-of-type { border-bottom: none; }
+
+.sf-label { font-size: 11px; color: var(--text); margin-bottom: 2px; }
+.sf-hint  { font-size: 9px; color: var(--text-3); }
+
+.sf-ctrl { display: flex; align-items: center; gap: 7px; flex-shrink: 0; }
+
+.s-select, .s-input {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  color: var(--text);
+  padding: 5px 8px;
+  font-family: var(--font-m);
+  font-size: 11px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.s-select:focus, .s-input:focus { border-color: rgba(30,215,96,0.4); }
+.s-input-sm { width: 58px; }
+.s-input-md { width: 120px; }
+
+.s-hotkey-field {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 5px 9px;
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.s-hotkey-field:hover { border-color: rgba(30,215,96,0.28); }
+
+.kbd {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 10px;
+  color: var(--text-2);
+}
+.kbd-sep { font-size: 9px; color: var(--text-3); }
+
+.s-toggle-wrap {
+  position: relative;
+  width: 36px; height: 20px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.s-toggle-track {
+  position: absolute;
+  inset: 0;
+  border-radius: 100px;
+  background: #333;
+  transition: background 0.2s;
+}
+.s-toggle-thumb {
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 16px; height: 16px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+}
+.toggled .s-toggle-track { background: var(--green); }
+.toggled .s-toggle-thumb { transform: translateX(16px); }
+
+.s-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100px; height: 4px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+}
+.s-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 13px; height: 13px;
+  background: var(--green);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(30,215,96,0.5);
+}
+
+.range-val { font-size: 10px; color: var(--green); min-width: 30px; text-align: right; }
+
+.settings-footer {
+  padding: 11px 17px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-primary {
+  background: var(--green);
+  color: #000;
+  border: none;
+  border-radius: 100px;
+  padding: 7px 22px;
+  font-family: var(--font-m);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+  transition: all 0.15s;
+}
+.btn-primary:hover {
+  background: #22e865;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(30,215,96,0.3);
+}
+
+/* ---- WIZARD ---- */
+.wizard-cols {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.wiz-col-label {
+  text-align: center;
+  font-size: 9px;
+  color: var(--text-3);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.wiz-body { padding: 20px 16px; }
+
+.wiz-step-dots {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  margin-bottom: 18px;
+}
+.wiz-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); }
+.wiz-dot.on   { background: var(--green); }
+.wiz-dot.past { background: rgba(30,215,96,0.35); }
+
+.wiz-title {
+  font-family: var(--font-d);
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 8px;
+  letter-spacing: -0.3px;
+}
+
+.wiz-desc {
+  font-size: 10px;
+  color: var(--text-2);
+  text-align: center;
+  line-height: 1.65;
+  margin-bottom: 15px;
+}
+
+.dep-items { display: flex; flex-direction: column; gap: 5px; margin-bottom: 16px; }
+
+.dep-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 9px;
+  background: var(--bg-surface);
+  border-radius: var(--r-sm);
+  font-size: 10px;
+}
+.dep-icon { font-size: 12px; }
+.dep-name { color: var(--text); flex: 1; }
+.dep-size { color: var(--text-3); font-size: 9px; }
+
+.dep-badge {
+  font-size: 8.5px;
+  padding: 2px 7px;
+  border-radius: 100px;
+  letter-spacing: 0.3px;
+  font-weight: 500;
+}
+.b-installed { background: rgba(30,215,96,0.1);  color: var(--green); }
+.b-download  { background: rgba(255,149,0,0.1);  color: var(--orange); }
+.b-checking  { background: rgba(255,255,255,0.05); color: var(--text-3); }
+
+.wiz-btn {
+  width: 100%;
+  padding: 9px;
+  border-radius: 100px;
+  border: none;
+  font-family: var(--font-m);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+  transition: all 0.15s;
+}
+.wiz-btn-primary { background: var(--green); color: #000; }
+.wiz-btn-primary:hover { background: #22e865; box-shadow: 0 4px 14px rgba(30,215,96,0.25); }
+.wiz-btn-ghost {
+  background: var(--bg-elevated);
+  color: var(--text-2);
+  border: 1px solid var(--border);
+}
+
+/* Progress items */
+.prog-items { display: flex; flex-direction: column; gap: 9px; margin-bottom: 10px; }
+
+.prog-item-hdr {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9.5px;
+  margin-bottom: 4px;
+}
+.pi-name   { color: var(--text); }
+.pi-done   { color: var(--green); }
+.pi-active { color: var(--orange); animation: flicker 1.5s ease-in-out infinite; }
+.pi-pend   { color: var(--text-3); }
+
+@keyframes flicker {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.55; }
+}
+
+.prog-track { height: 3px; background: var(--bg-elevated); border-radius: 4px; overflow: hidden; }
+.prog-fill  { height: 100%; border-radius: 4px; transition: width 0.3s; }
+.pf-done    { width: 100%; background: var(--green); }
+.pf-active  { width: 58%; background: var(--orange); animation: ppulse 1.5s ease-in-out infinite; }
+.pf-pend    { width: 0%; background: var(--border); }
+
+@keyframes ppulse { 0%, 100% { opacity: 0.65; } 50% { opacity: 1; } }
+
+.log-box {
+  background: #050505;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 7px 9px;
+  font-size: 8.5px;
+  line-height: 1.65;
+  height: 60px;
+  overflow: hidden;
+  margin: 9px 0;
+}
+.log-g { color: var(--green); }
+.log-o { color: var(--orange); }
+.log-d { color: #333; }
+
+.prog-overall { padding-top: 8px; border-top: 1px solid var(--border); }
+.prog-overall-hdr {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  color: var(--text-3);
+  margin-bottom: 5px;
+}
+.prog-overall-track { height: 5px; background: var(--bg-elevated); border-radius: 4px; overflow: hidden; margin-bottom: 11px; }
+.prog-overall-fill  { height: 100%; width: 40%; background: linear-gradient(90deg, var(--green) 0%, #22e865 100%); border-radius: 4px; }
+
+/* ---- FILE DIALOG ---- */
+.file-win { max-width: 580px; }
+
+.file-nav-bar {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 13px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.fnb-btn {
+  width: 22px; height: 22px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: var(--text-2);
+  cursor: pointer;
+  user-select: none;
+}
+
+.fnb-path {
+  flex: 1;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 9px;
+  font-size: 10.5px;
+  color: var(--text-2);
+}
+
+.file-list-area {
+  padding: 10px 11px;
+  min-height: 136px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.f-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 6px 9px;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  font-size: 11px;
+  color: var(--text-2);
+  border: 1px solid transparent;
+  transition: all 0.1s;
+}
+.f-item:hover { background: var(--bg-surface); color: var(--text); }
+.f-item.f-selected {
+  background: rgba(30,215,96,0.06);
+  border-color: rgba(30,215,96,0.15);
+  color: var(--text);
+}
+
+.f-icon { font-size: 14px; }
+.f-name { flex: 1; }
+.f-meta { font-size: 9.5px; color: var(--text-3); }
+
+.file-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 13px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-surface);
+}
+
+.f-name-input {
+  flex: 1;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 5px 9px;
+  font-family: var(--font-m);
+  font-size: 11px;
+  color: var(--text);
+  outline: none;
+}
+.f-name-input:focus { border-color: rgba(30,215,96,0.4); }
+
+.f-filter-select {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-2);
+  padding: 5px 8px;
+  font-family: var(--font-m);
+  font-size: 10.5px;
+  cursor: pointer;
+  outline: none;
+}
+
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  padding: 6px 16px;
+  font-family: var(--font-m);
+  font-size: 11px;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: all 0.12s;
+  white-space: nowrap;
+}
+.btn-ghost:hover { border-color: rgba(255,255,255,0.14); color: var(--text); }
+
+/* ---- NOTIFICATIONS ---- */
+.toast-scene { display: flex; flex-direction: column; gap: 10px; max-width: 390px; }
+
+.toast {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 13px 15px;
+  display: flex;
+  gap: 11px;
+  align-items: flex-start;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  transition: transform 0.18s;
+}
+.toast:hover { transform: translateX(4px); }
+
+.toast-stripe { width: 3px; border-radius: 4px; align-self: stretch; flex-shrink: 0; }
+.ts-green  { background: var(--green); }
+.ts-red    { background: var(--red); }
+.ts-orange { background: var(--orange); }
+.ts-blue   { background: var(--blue); }
+
+.toast-ic {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.ti-g { background: rgba(30,215,96,0.1);  color: var(--green); }
+.ti-r { background: rgba(232,64,64,0.1);  color: var(--red); }
+.ti-o { background: rgba(255,149,0,0.1);  color: var(--orange); }
+.ti-b { background: rgba(58,159,255,0.1); color: var(--blue); }
+
+.toast-c { flex: 1; }
+.t-title { font-size: 11px; font-weight: 500; color: var(--text); margin-bottom: 3px; letter-spacing: 0.1px; }
+.t-body  { font-size: 10px; color: var(--text-2); line-height: 1.5; }
+.t-time  { font-size: 9px; color: var(--text-3); flex-shrink: 0; }
+
+/* ---- SCROLLBAR ---- */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+/* ---- ICONS ---- */
+.icon {
+  width: 14px; height: 14px;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
+  display: block;
+}
+.icon-sm { width: 11px; height: 11px; stroke-width: 2; }
+.dep-icon { display: flex; align-items: center; }
+.ctx-icon { display: flex; align-items: center; justify-content: center; width: 16px; opacity: 0.75; }
+.f-icon   { display: flex; align-items: center; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-wave">
+      <div class="bw-bar"></div>
+      <div class="bw-bar"></div>
+      <div class="bw-bar"></div>
+      <div class="bw-bar"></div>
+      <div class="bw-bar"></div>
+    </div>
+    <span class="brand-name">BertyType</span>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div>
+      <div class="nav-group-label">Overview</div>
+      <ul class="nav-list">
+        <li><a href="#hero"><span class="nav-dot dot-green"></span>Introduction</a></li>
+      </ul>
+    </div>
+    <div>
+      <div class="nav-group-label">Screens</div>
+      <ul class="nav-list">
+        <li><a href="#tray-icon"><span class="nav-dot dot-green"></span>Tray Icon</a></li>
+        <li><a href="#tray-menu"><span class="nav-dot dot-dim"></span>Tray Menu</a></li>
+        <li><a href="#settings"><span class="nav-dot dot-blue"></span>Settings</a></li>
+        <li><a href="#wizard"><span class="nav-dot dot-orange"></span>Setup Wizard</a></li>
+        <li><a href="#file-dialog"><span class="nav-dot dot-dim"></span>File Dialog</a></li>
+        <li><a href="#notifications"><span class="nav-dot dot-green"></span>Notifications</a></li>
+      </ul>
+    </div>
+  </nav>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- HERO -->
+  <section id="hero" class="hero">
+    <div class="hero-tag">
+      <div class="hero-tag-dot"></div>
+      UI Showcase - v1.0
+    </div>
+    <h1>Berty<span class="hero-accent">Type</span></h1>
+    <p class="hero-sub">Local, offline voice dictation for Windows. Captures microphone audio, transcribes via VibeVoice STT, optionally refines with Gemma 4, and injects text system-wide - no cloud, no latency.</p>
+    <div class="feature-pills">
+      <span class="fpill">100% Offline</span>
+      <span class="fpill">Push-to-Talk</span>
+      <span class="fpill">LLM Refinement</span>
+      <span class="fpill">System-wide Injection</span>
+      <span class="fpill">VibeVoice STT</span>
+      <span class="fpill">Gemma 4 via Ollama</span>
+    </div>
+  </section>
+
+  <!-- 01: TRAY ICON STATES -->
+  <section id="tray-icon" class="section">
+    <div class="section-header">
+      <span class="s-num">01</span>
+      <h2 class="s-title">System Tray Icon</h2>
+    </div>
+    <p class="s-desc">A 64x64px animated five-bar waveform rendered in the Windows system tray via pystray + PIL. Bar color and animation speed reflect the current app state in real time.</p>
+
+    <div class="states-grid">
+      <div class="state-card">
+        <div class="ti-box state-idle">
+          <div class="ti-bar"></div><div class="ti-bar"></div><div class="ti-bar"></div>
+          <div class="ti-bar"></div><div class="ti-bar"></div>
+        </div>
+        <span class="state-label l-idle">Idle</span>
+        <span class="state-note">Waiting for hotkey.<br>Slow rhythmic pulse.</span>
+      </div>
+
+      <div class="state-card">
+        <div class="ti-box state-recording">
+          <div class="ti-bar"></div><div class="ti-bar"></div><div class="ti-bar"></div>
+          <div class="ti-bar"></div><div class="ti-bar"></div>
+        </div>
+        <span class="state-label l-recording">Recording</span>
+        <span class="state-note">Mic is active.<br>Fast, energetic wave.</span>
+      </div>
+
+      <div class="state-card">
+        <div class="ti-box state-processing">
+          <div class="ti-bar"></div><div class="ti-bar"></div><div class="ti-bar"></div>
+          <div class="ti-bar"></div><div class="ti-bar"></div>
+        </div>
+        <span class="state-label l-processing">Processing</span>
+        <span class="state-note">STT or LLM running.<br>Irregular motion.</span>
+      </div>
+
+      <div class="state-card">
+        <div class="ti-box state-error">
+          <div class="ti-bar"></div><div class="ti-bar"></div><div class="ti-bar"></div>
+          <div class="ti-bar"></div><div class="ti-bar"></div>
+        </div>
+        <span class="state-label l-error">Error</span>
+        <span class="state-note">Something failed.<br>Static, faded bars.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 02: TRAY MENU -->
+  <section id="tray-menu" class="section">
+    <div class="section-header">
+      <span class="s-num">02</span>
+      <h2 class="s-title">Tray Context Menu</h2>
+    </div>
+    <p class="s-desc">Right-clicking the tray icon opens a compact OS context menu with three actions: file transcription, settings, and quit. Provided by pystray, renders with the system theme.</p>
+
+    <div class="tray-scene">
+      <div class="tray-scene-inner">
+        <div class="context-menu">
+          <div class="ctx-item hovered">
+            <span class="ctx-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M17.5 22h.5a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v3"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><circle cx="6" cy="17" r="3"/><path d="M9 17v-3a3 3 0 0 1 6 0v7"/><circle cx="15" cy="21" r="3"/></svg></span>
+            Transcribe file...
+          </div>
+          <div class="ctx-sep"></div>
+          <div class="ctx-item">
+            <span class="ctx-icon"><svg class="icon" viewBox="0 0 24 24"><line x1="4" x2="4" y1="21" y2="14"/><line x1="4" x2="4" y1="10" y2="3"/><line x1="12" x2="12" y1="21" y2="12"/><line x1="12" x2="12" y1="8" y2="3"/><line x1="20" x2="20" y1="21" y2="16"/><line x1="20" x2="20" y1="12" y2="3"/><line x1="1" x2="7" y1="14" y2="14"/><line x1="9" x2="15" y1="8" y2="8"/><line x1="17" x2="23" y1="16" y2="16"/></svg></span>
+            Settings
+          </div>
+          <div class="ctx-sep"></div>
+          <div class="ctx-item danger">
+            <span class="ctx-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" x2="12" y1="2" y2="12"/></svg></span>
+            Quit
+          </div>
+        </div>
+        <div class="taskbar-strip">
+          <span class="taskbar-label">System Tray</span>
+          <div class="taskbar-icon">
+            <div class="tb-bar"></div>
+            <div class="tb-bar"></div>
+            <div class="tb-bar"></div>
+            <div class="tb-bar"></div>
+            <div class="tb-bar"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 03: SETTINGS -->
+  <section id="settings" class="section">
+    <div class="section-header">
+      <span class="s-num">03</span>
+      <h2 class="s-title">Settings Window</h2>
+    </div>
+    <p class="s-desc">All configuration in one window - opened via the tray menu. Nine fields covering recording mode, hotkeys, LLM model, VAD sensitivity, and timing parameters. Settings persist to disk via <code>config.py</code>.</p>
+
+    <div class="win settings-win">
+      <div class="win-bar">
+        <div class="win-btns">
+          <div class="wb wb-red"></div>
+          <div class="wb wb-yel"></div>
+          <div class="wb wb-grn"></div>
+        </div>
+        <span class="win-title">BertyType Settings</span>
+        <div style="width:39px"></div>
+      </div>
+
+      <div class="settings-form">
+        <div class="sf-row">
+          <div>
+            <div class="sf-label">Recording Mode</div>
+            <div class="sf-hint">How to start and stop recording</div>
+          </div>
+          <div class="sf-ctrl">
+            <select class="s-select">
+              <option>push_to_talk</option>
+              <option>double_tap_toggle</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="sf-row">
+          <div>
+            <div class="sf-label">Hotkey</div>
+            <div class="sf-hint">Key to hold (PTT) or tap (toggle)</div>
+          </div>
+          <div class="sf-ctrl">
+            <div class="s-hotkey-field">
+              <span class="kbd">ctrl</span>
+              <span class="kbd-sep">+</span>
+              <span class="kbd">alt</span>
+              <span class="kbd-sep">+</span>
+              <span class="kbd">space</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="sf-row">
+          <div>
+            <div class="sf-label">Double-tap Window</div>
+            <div class="sf-hint">Max gap between taps (0.05 - 2.0 s)</div>
+          </div>
+          <div class="sf-ctrl">
+            <input type="range" class="s-range" min="50" max="2000" value="400" id="r1">
+            <span class="range-val" id="r1v">0.40s</span>
+          </div>
+        </div>
+
+        <div class="sf-row">
+          <div>
+            <div class="sf-label">Cancel Hotkey</div>
+            <div class="sf-hint">Abort an in-progress recording</div>
+          </div>
+          <div class="sf-ctrl">
+            <div class="s-hotkey-field">
+              <span class="kbd">esc</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="sf-row">
+          <div>
+            <div class="sf-label">LLM Model</div>
+            <div class="sf-hint">Ollama model name for refinement</div>
+          </div>
+          <div class="sf-ctrl">
+            <input class="s-input s-input-md" type="text" value="gemma4:e2b">
+          </div>
+        </div>
+
+        <div class="sf-row">
+          <div>
+            <div class="sf-label">Refine with LLM</div>
+            <div class="sf-hint">Pass STT output through Gemma 4</div>
+          </div>
+          <div class="sf-ctrl">
+            <div class="s-toggle-wrap toggled" onclick="this.classList.toggle('toggled')">
+              <div class="s-toggle-track"></div>
+              <div class="s-toggle-thumb"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sf-row">
+          <div>
+            <div class="sf-label">VAD Threshold</div>
+            <div class="sf-hint">Voice activity sensitivity (0.0 - 0.5)</div>
+          </div>
+          <div class="sf-ctrl">
+            <input type="range" class="s-range" min="0" max="50" value="15" id="r2">
+            <span class="range-val" id="r2v">0.15</span>
+          </div>
+        </div>
+
+        <div class="sf-row">
+          <div>
+            <div class="sf-label">LLM Timeout</div>
+            <div class="sf-hint">Seconds before giving up on LLM</div>
+          </div>
+          <div class="sf-ctrl">
+            <input class="s-input s-input-sm" type="number" value="30">
+            <span style="font-size:10px; color:var(--text-3)">sec</span>
+          </div>
+        </div>
+
+        <div class="sf-row">
+          <div>
+            <div class="sf-label">Injection Delay</div>
+            <div class="sf-hint">Pause before typing into active window</div>
+          </div>
+          <div class="sf-ctrl">
+            <input class="s-input s-input-sm" type="number" step="0.05" value="0.10">
+            <span style="font-size:10px; color:var(--text-3)">sec</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-footer">
+        <button class="btn-primary">Save Settings</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 04: SETUP WIZARD -->
+  <section id="wizard" class="section">
+    <div class="section-header">
+      <span class="s-num">04</span>
+      <h2 class="s-title">Setup Wizard</h2>
+    </div>
+    <p class="s-desc">A three-step first-run wizard (540x420px) embedded in the main exe. Checks for required dependencies and downloads missing components with per-item progress tracking and a console log.</p>
+
+    <div class="wizard-cols">
+      <!-- STEP 1 -->
+      <div>
+        <div class="wiz-col-label">Step 1 - Welcome</div>
+        <div class="win">
+          <div class="win-bar">
+            <div class="win-btns">
+              <div class="wb wb-red"></div><div class="wb wb-yel"></div><div class="wb wb-grn"></div>
+            </div>
+            <span class="win-title">BertyType Setup</span>
+            <div style="width:39px"></div>
+          </div>
+          <div class="wiz-body">
+            <div class="wiz-step-dots">
+              <div class="wiz-dot on"></div>
+              <div class="wiz-dot"></div>
+              <div class="wiz-dot"></div>
+            </div>
+            <div class="wiz-title">Welcome</div>
+            <p class="wiz-desc">BertyType needs a few components to run. The wizard will check what's installed and fetch anything missing.</p>
+            <div class="dep-items">
+              <div class="dep-row">
+                <span class="dep-icon"><svg class="icon" viewBox="0 0 24 24"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></span>
+                <span class="dep-name">Ollama</span>
+                <span class="dep-size">~90 MB</span>
+              </div>
+              <div class="dep-row">
+                <span class="dep-icon"><svg class="icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>
+                <span class="dep-name">gemma4:e2b model</span>
+                <span class="dep-size">~2 GB</span>
+              </div>
+              <div class="dep-row">
+                <span class="dep-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg></span>
+                <span class="dep-name">VibeVoice ASR</span>
+                <span class="dep-size">~1.5 GB</span>
+              </div>
+              <div class="dep-row">
+                <span class="dep-icon"><svg class="icon" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 3v18"/><path d="M3 7.5h4"/><path d="M3 12h18"/><path d="M3 16.5h4"/><path d="M17 3v18"/><path d="M17 7.5h4"/><path d="M17 16.5h4"/></svg></span>
+                <span class="dep-name">ffmpeg</span>
+                <span class="dep-size">Bundled</span>
+              </div>
+            </div>
+            <button class="wiz-btn wiz-btn-primary">Next &rsaquo;</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 2 -->
+      <div>
+        <div class="wiz-col-label">Step 2 - Dependency Check</div>
+        <div class="win">
+          <div class="win-bar">
+            <div class="win-btns">
+              <div class="wb wb-red"></div><div class="wb wb-yel"></div><div class="wb wb-grn"></div>
+            </div>
+            <span class="win-title">BertyType Setup</span>
+            <div style="width:39px"></div>
+          </div>
+          <div class="wiz-body">
+            <div class="wiz-step-dots">
+              <div class="wiz-dot past"></div>
+              <div class="wiz-dot on"></div>
+              <div class="wiz-dot"></div>
+            </div>
+            <div class="wiz-title">Checking System</div>
+            <p class="wiz-desc">Scanning for installed components. Items marked "Will download" will be fetched automatically.</p>
+            <div class="dep-items">
+              <div class="dep-row">
+                <span class="dep-icon"><svg class="icon" viewBox="0 0 24 24"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></span>
+                <span class="dep-name">Ollama</span>
+                <span class="dep-badge b-installed">Installed</span>
+              </div>
+              <div class="dep-row">
+                <span class="dep-icon"><svg class="icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>
+                <span class="dep-name">gemma4:e2b</span>
+                <span class="dep-badge b-download">Will download</span>
+              </div>
+              <div class="dep-row">
+                <span class="dep-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg></span>
+                <span class="dep-name">VibeVoice ASR</span>
+                <span class="dep-badge b-download">Will download</span>
+              </div>
+              <div class="dep-row">
+                <span class="dep-icon"><svg class="icon" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 3v18"/><path d="M3 7.5h4"/><path d="M3 12h18"/><path d="M3 16.5h4"/><path d="M17 3v18"/><path d="M17 7.5h4"/><path d="M17 16.5h4"/></svg></span>
+                <span class="dep-name">ffmpeg</span>
+                <span class="dep-badge b-installed">Bundled</span>
+              </div>
+            </div>
+            <button class="wiz-btn wiz-btn-primary">Install</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 3 -->
+      <div>
+        <div class="wiz-col-label">Step 3 - Installing</div>
+        <div class="win">
+          <div class="win-bar">
+            <div class="win-btns">
+              <div class="wb wb-red"></div><div class="wb wb-yel"></div><div class="wb wb-grn"></div>
+            </div>
+            <span class="win-title">BertyType Setup</span>
+            <div style="width:39px"></div>
+          </div>
+          <div class="wiz-body">
+            <div class="wiz-step-dots">
+              <div class="wiz-dot past"></div>
+              <div class="wiz-dot past"></div>
+              <div class="wiz-dot on"></div>
+            </div>
+            <div class="wiz-title">Installing</div>
+            <div class="prog-items">
+              <div>
+                <div class="prog-item-hdr">
+                  <span class="pi-name">gemma4:e2b model</span>
+                  <span class="pi-done">Done</span>
+                </div>
+                <div class="prog-track"><div class="prog-fill pf-done"></div></div>
+              </div>
+              <div>
+                <div class="prog-item-hdr">
+                  <span class="pi-name">VibeVoice ASR</span>
+                  <span class="pi-active">Downloading...</span>
+                </div>
+                <div class="prog-track"><div class="prog-fill pf-active"></div></div>
+              </div>
+              <div>
+                <div class="prog-item-hdr">
+                  <span class="pi-name">VibeVoice model weights</span>
+                  <span class="pi-pend">Pending</span>
+                </div>
+                <div class="prog-track"><div class="prog-fill pf-pend"></div></div>
+              </div>
+            </div>
+            <div class="log-box">
+              <div class="log-g">[OK] gemma4:e2b pulled (2.1 GB)</div>
+              <div class="log-o">[..] Downloading vibevoice_asr_base.pt</div>
+              <div class="log-d">[..] 892 MB / 1523 MB (58%)</div>
+              <div class="log-d">[--] Waiting for model weights...</div>
+            </div>
+            <div class="prog-overall">
+              <div class="prog-overall-hdr">
+                <span>Overall progress</span>
+                <span>40%</span>
+              </div>
+              <div class="prog-overall-track">
+                <div class="prog-overall-fill"></div>
+              </div>
+              <button class="wiz-btn wiz-btn-ghost" style="font-size:10px; padding:7px;">Cancel</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 05: FILE DIALOG -->
+  <section id="file-dialog" class="section">
+    <div class="section-header">
+      <span class="s-num">05</span>
+      <h2 class="s-title">File Transcription Dialog</h2>
+    </div>
+    <p class="s-desc">Triggered by "Transcribe file..." in the tray menu. A Tkinter file picker filtered for common audio formats. The result is copied to clipboard and saved as a <code>.txt</code> alongside the source file.</p>
+
+    <div class="win file-win">
+      <div class="win-bar">
+        <div class="win-btns">
+          <div class="wb wb-red"></div><div class="wb wb-yel"></div><div class="wb wb-grn"></div>
+        </div>
+        <span class="win-title">Select Audio File - BertyType</span>
+        <div style="width:39px"></div>
+      </div>
+      <div class="file-nav-bar">
+        <div class="fnb-btn">&#8592;</div>
+        <div class="fnb-btn">&#8593;</div>
+        <div class="fnb-path">C:\Users\Aryaman\Recordings</div>
+      </div>
+      <div class="file-list-area">
+        <div class="f-item">
+          <span class="f-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></span>
+          <span class="f-name">Meetings</span>
+          <span class="f-meta">Folder</span>
+        </div>
+        <div class="f-item">
+          <span class="f-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></span>
+          <span class="f-name">Podcasts</span>
+          <span class="f-meta">Folder</span>
+        </div>
+        <div class="f-item f-selected">
+          <span class="f-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M17.5 22h.5a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v3"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><circle cx="6" cy="17" r="3"/><path d="M9 17v-3a3 3 0 0 1 6 0v7"/><circle cx="15" cy="21" r="3"/></svg></span>
+          <span class="f-name">standup-2025-05-11.wav</span>
+          <span class="f-meta">14.2 MB</span>
+        </div>
+        <div class="f-item">
+          <span class="f-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M17.5 22h.5a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v3"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><circle cx="6" cy="17" r="3"/><path d="M9 17v-3a3 3 0 0 1 6 0v7"/><circle cx="15" cy="21" r="3"/></svg></span>
+          <span class="f-name">voice-memo.m4a</span>
+          <span class="f-meta">3.8 MB</span>
+        </div>
+        <div class="f-item">
+          <span class="f-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M17.5 22h.5a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v3"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><circle cx="6" cy="17" r="3"/><path d="M9 17v-3a3 3 0 0 1 6 0v7"/><circle cx="15" cy="21" r="3"/></svg></span>
+          <span class="f-name">interview-raw.flac</span>
+          <span class="f-meta">87.1 MB</span>
+        </div>
+      </div>
+      <div class="file-footer">
+        <input class="f-name-input" type="text" value="standup-2025-05-11.wav" readonly>
+        <select class="f-filter-select">
+          <option>Audio (*.wav *.mp3 *.m4a *.flac)</option>
+          <option>All files (*.*)</option>
+        </select>
+        <button class="btn-ghost">Cancel</button>
+        <button class="btn-primary">Open</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 06: NOTIFICATIONS -->
+  <section id="notifications" class="section">
+    <div class="section-header">
+      <span class="s-num">06</span>
+      <h2 class="s-title">Desktop Notifications</h2>
+    </div>
+    <p class="s-desc">Toast notifications for key events, delivered via pystray's <code>notify()</code> and rendered by Windows. Four notification types are used across the app lifecycle.</p>
+
+    <div class="toast-scene">
+      <div class="toast">
+        <div class="toast-stripe ts-green"></div>
+        <div class="toast-ic ti-g"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></div>
+        <div class="toast-c">
+          <div class="t-title">Transcription complete</div>
+          <div class="t-body">standup-2025-05-11.wav - Copied to clipboard and saved as .txt</div>
+        </div>
+        <div class="t-time">just now</div>
+      </div>
+
+      <div class="toast">
+        <div class="toast-stripe ts-blue"></div>
+        <div class="toast-ic ti-b"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg></div>
+        <div class="toast-c">
+          <div class="t-title">Pulling gemma4</div>
+          <div class="t-body">Downloading model from Ollama registry. This may take a few minutes.</div>
+        </div>
+        <div class="t-time">2m ago</div>
+      </div>
+
+      <div class="toast">
+        <div class="toast-stripe ts-orange"></div>
+        <div class="toast-ic ti-o"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></div>
+        <div class="toast-c">
+          <div class="t-title">LLM timeout</div>
+          <div class="t-body">Gemma 4 did not respond within 30s. Injecting raw STT output instead.</div>
+        </div>
+        <div class="t-time">5m ago</div>
+      </div>
+
+      <div class="toast">
+        <div class="toast-stripe ts-red"></div>
+        <div class="toast-ic ti-r"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></div>
+        <div class="toast-c">
+          <div class="t-title">Transcription failed</div>
+          <div class="t-body">VibeVoice returned an empty result. Check microphone and try again.</div>
+        </div>
+        <div class="t-time">12m ago</div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+const sections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('.nav-list a');
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      navLinks.forEach(a => {
+        a.classList.toggle('active', a.getAttribute('href') === '#' + e.target.id);
+      });
+    }
+  });
+}, { threshold: 0.35 });
+
+sections.forEach(s => observer.observe(s));
+
+// Live slider values
+document.getElementById('r1').addEventListener('input', function() {
+  document.getElementById('r1v').textContent = (this.value / 1000).toFixed(2) + 's';
+});
+document.getElementById('r2').addEventListener('input', function() {
+  document.getElementById('r2v').textContent = (this.value / 100).toFixed(2);
+});
+</script>
+
+</body>
+</html>

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "bertytype"
-version = "0.1.1"
+version = "0.1.2"
 description = "Local voice dictation powered by VibeVoice and Gemma 4"
 license = { text = "MIT" }
 requires-python = ">=3.10"
