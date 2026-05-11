@@ -1,5 +1,6 @@
 import queue
 import threading
+import pytest
 from unittest.mock import patch, MagicMock, call
 from pathlib import Path
 
@@ -90,3 +91,69 @@ def test_ensure_ollama_service_starts_and_waits():
         result = installers._ensure_ollama_service(q, cancel)
 
     assert result is True
+
+
+def test_pull_model_success():
+    cancel = threading.Event()
+    q = queue.Queue()
+
+    lines = [
+        '{"status":"pulling manifest"}',
+        '{"status":"downloading","completed":512,"total":1024}',
+        '{"status":"downloading","completed":1024,"total":1024}',
+        '{"status":"success"}',
+    ]
+    mock_proc = MagicMock()
+    mock_proc.stdout = iter(lines)
+    mock_proc.wait = MagicMock()
+    mock_proc.returncode = 0
+
+    with patch("subprocess.Popen", return_value=mock_proc):
+        from bertytype_setup import installers
+        import importlib
+        importlib.reload(installers)
+        result = installers.pull_model(q, cancel)
+
+    assert result is True
+    events = _drain(q)
+    progress_events = [e for e in events if e[0] == "step_progress"]
+    assert any(e[2] == pytest.approx(0.5) for e in progress_events)
+    assert any(e[2] == pytest.approx(1.0) for e in progress_events)
+
+
+def test_pull_model_cancelled():
+    cancel = threading.Event()
+    q = queue.Queue()
+    cancel.set()
+
+    mock_proc = MagicMock()
+    mock_proc.stdout = iter([])
+    mock_proc.wait = MagicMock()
+    mock_proc.returncode = 0
+
+    with patch("subprocess.Popen", return_value=mock_proc):
+        from bertytype_setup import installers
+        import importlib
+        importlib.reload(installers)
+        result = installers.pull_model(q, cancel)
+
+    assert result is False
+    mock_proc.kill.assert_called_once()
+
+
+def test_pull_model_nonzero_exit():
+    cancel = threading.Event()
+    q = queue.Queue()
+
+    mock_proc = MagicMock()
+    mock_proc.stdout = iter([])
+    mock_proc.wait = MagicMock()
+    mock_proc.returncode = 1
+
+    with patch("subprocess.Popen", return_value=mock_proc):
+        from bertytype_setup import installers
+        import importlib
+        importlib.reload(installers)
+        result = installers.pull_model(q, cancel)
+
+    assert result is False

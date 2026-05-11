@@ -94,3 +94,41 @@ def install_ollama(q: queue.Queue, cancel: threading.Event) -> bool:
         _post(q, "log", f"Installer exited with code {result.returncode}")
         return False
     return _ensure_ollama_service(q, cancel)
+
+
+def pull_model(q: queue.Queue, cancel: threading.Event, model: str = MODEL) -> bool:
+    """Stream `ollama pull <model>` and report progress."""
+    _post(q, "log", f"Pulling {model} (this may take several minutes)...")
+    try:
+        proc = subprocess.Popen(
+            ["ollama", "pull", model],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+        )
+        if cancel.is_set():
+            proc.kill()
+            return False
+        for line in proc.stdout:
+            if cancel.is_set():
+                proc.kill()
+                return False
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                data = json.loads(line)
+                total = data.get("total", 0)
+                completed = data.get("completed", 0)
+                status = data.get("status", "")
+                if total and completed:
+                    _post(q, "step_progress", "model", completed / total)
+                if status:
+                    _post(q, "log", status)
+            except json.JSONDecodeError:
+                _post(q, "log", line)
+        proc.wait()
+        return proc.returncode == 0
+    except Exception as e:
+        _post(q, "log", f"Model pull failed: {e}")
+        return False
