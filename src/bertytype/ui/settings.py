@@ -58,7 +58,7 @@ class _HotkeyCapture(tk.Frame):
 
 def open_settings(cfg: Config, on_save: Callable[[Config], None]) -> None:
     win = tk.Tk()
-    win.title("live-stt settings")
+    win.title("BertyType settings")
     win.resizable(False, False)
 
     row = 0

@@ -16,7 +16,7 @@ def _ollama_running() -> bool:
 
 
 def main() -> None:
-    print("live-stt Ollama setup")
+    print("BertyType Ollama setup")
     print("---------------------")
 
     try:
