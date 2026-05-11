@@ -28,8 +28,6 @@ def test_install_ollama_success(tmp_path):
     patch("bertytype_setup.installers._download_file", return_value=fake_exe), \
     patch("subprocess.run", return_value=mock_run):
         from bertytype_setup import installers
-        import importlib
-        importlib.reload(installers)
         result = installers.install_ollama(q, cancel)
 
     assert result is True
