@@ -1,4 +1,5 @@
 # -*- mode: python ; coding: utf-8 -*-
+from PyInstaller.utils.hooks import collect_data_files
 
 block_cipher = None
 
@@ -8,10 +9,9 @@ a = Analysis(
     binaries=[],
     datas=[
         ('src/livesttt', 'livesttt'),
-        (r'.venv\Lib\site-packages\_sounddevice_data', '_sounddevice_data'),
+        *collect_data_files('sounddevice'),
     ],
     hiddenimports=[
-        'cv2',
         'PIL',
         'pystray',
         'pyautogui',
@@ -21,8 +21,6 @@ a = Analysis(
         'pydub',
         'requests',
         'loguru',
-        'transformers',
-        'torch',
         'scipy',
         'scipy.signal',
         'pystray._win32',
