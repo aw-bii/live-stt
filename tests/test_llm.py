@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import patch, MagicMock
-from livesttt.llm import prompts, client
+from bertytype.llm import prompts, client
 
 
 def test_get_prompt_clean_up_contains_text():

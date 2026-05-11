@@ -5,15 +5,15 @@ from pathlib import Path
 import pyperclip
 import requests
 
-from livesttt import config as cfg_module
-from livesttt.audio import capture, vad, reader
-from livesttt.stt import engine as stt_engine, vibevoice, vibevoice_local
-from livesttt.llm import client as llm_client
-from livesttt.injection import injector, exporter
-from livesttt.hotkeys import daemon as hotkey_daemon
-from livesttt.ui import tray, settings
-from livesttt import messages
-from livesttt import logging as log_module
+from bertytype import config as cfg_module
+from bertytype.audio import capture, vad, reader
+from bertytype.stt import engine as stt_engine, vibevoice, vibevoice_local
+from bertytype.llm import client as llm_client
+from bertytype.injection import injector, exporter
+from bertytype.hotkeys import daemon as hotkey_daemon
+from bertytype.ui import tray, settings
+from bertytype import messages
+from bertytype import logging as log_module
 
 logger = log_module.logger
 

@@ -2,8 +2,8 @@ import sys
 from pathlib import Path
 from loguru import logger
 
-LOG_PATH = Path.home() / ".livesttt" / "logs"
-LOG_FILE = "livesttt.log"
+LOG_PATH = Path.home() / ".bertytype" / "logs"
+LOG_FILE = "bertytype.log"
 
 logger.remove()
 logger.add(

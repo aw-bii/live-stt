@@ -12,3 +12,8 @@ build/
 .claude/
 graphify-out/
 .graphify_python
+CLAUDE.md
+AGENTS.md
+TODO.md
+DESIGN.md
+docs/superpowers/

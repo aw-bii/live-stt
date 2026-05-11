@@ -1,6 +1,6 @@
 import threading
 from unittest.mock import patch
-from livesttt import __main__ as app
+from bertytype import __main__ as app
 
 
 def test_health_monitor_stops_when_quit_event_is_set():

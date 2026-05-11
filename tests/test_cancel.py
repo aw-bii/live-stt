@@ -1,4 +1,4 @@
-import livesttt.__main__ as app
+import bertytype.__main__ as app
 
 
 def test_on_cancel_sets_cancel_event():

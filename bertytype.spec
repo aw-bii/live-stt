@@ -4,11 +4,11 @@ from PyInstaller.utils.hooks import collect_data_files
 block_cipher = None
 
 a = Analysis(
-    ['src/livesttt/__main__.py'],
+    ['src/bertytype/__main__.py'],
     pathex=['src'],
     binaries=[],
     datas=[
-        ('src/livesttt', 'livesttt'),
+        ('src/bertytype', 'bertytype'),
         *collect_data_files('sounddevice'),
     ],
     hiddenimports=[
@@ -51,7 +51,7 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name='livesttt',
+    name='bertytype',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -64,5 +64,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon='src/livesttt/assets/icon.ico',
+    icon='src/bertytype/assets/icon.ico',
 )

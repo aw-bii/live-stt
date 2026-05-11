@@ -1,4 +1,4 @@
-# Live STT - Product Requirements Document
+# BertyType - Product Requirements Document
 
 ## Vision
 A local, offline voice-dictation app that provides real-time speech-to-text transcription with optional LLM refinement, enabling users to dictate text into any application without cloud dependencies.

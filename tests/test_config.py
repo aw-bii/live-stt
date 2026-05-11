@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 import pytest
-from livesttt import config
+from bertytype import config
 
 
 def test_defaults():

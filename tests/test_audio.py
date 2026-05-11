@@ -2,11 +2,11 @@ import threading
 import numpy as np
 import pytest
 from unittest.mock import patch, MagicMock
-from livesttt.audio import capture
+from bertytype.audio import capture
 import wave
 import struct
 from pathlib import Path
-from livesttt.audio import reader, vad
+from bertytype.audio import reader, vad
 
 
 def test_start_recording_returns_bytes():

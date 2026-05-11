@@ -1,12 +1,12 @@
-# Live STT - System Architecture
+# BertyType - System Architecture
 
 ## Overview
-Live STT is a modular, offline-first voice dictation application for Windows that processes speech through a pipeline of specialized agents, each responsible for a single concern in the transcription workflow.
+BertyType is a modular, offline-first voice dictation application for Windows that processes speech through a pipeline of specialized agents, each responsible for a single concern in the transcription workflow.
 
 ## Core Components
 
 ### 1. Audio Capture Layer
-- **Location**: `src/livesttt/audio/`
+- **Location**: `src/bertytype/audio/`
 - **Responsibilities**:
   - Microphone input via `sounddevice` or `pyaudio`
   - Voice Activity Detection (VAD) for speech detection
@@ -18,7 +18,7 @@ Live STT is a modular, offline-first voice dictation application for Windows tha
   - `reader.py`: Audio file reading utilities
 
 ### 2. Speech-to-Text (STT) Agent
-- **Location**: `src/livesttt/stt/`
+- **Location**: `src/bertytype/stt/`
 - **Responsibilities**:
   - Interface with VibeVoice STT engine
   - Convert audio bytes to text transcripts
@@ -28,7 +28,7 @@ Live STT is a modular, offline-first voice dictation application for Windows tha
   - `__init__.py`: Module initialization
 
 ### 3. LLM Refinement Agent
-- **Location**: `src/livesttt/llm/`
+- **Location**: `src/bertytype/llm/`
 - **Responsibilities**:
   - Communicate with local Gemma 4 model via Ollama
   - Apply text refinement (filler word removal, punctuation, formatting)
@@ -39,7 +39,7 @@ Live STT is a modular, offline-first voice dictation application for Windows tha
   - `__init__.py`: Module initialization
 
 ### 4. Text Injection Agent
-- **Location**: `src/livesttt/injection/`
+- **Location**: `src/bertytype/injection/`
 - **Responsibilities**:
   - Detect active window on Windows
   - Inject text via clipboard + Ctrl+V simulation
@@ -51,7 +51,7 @@ Live STT is a modular, offline-first voice dictation application for Windows tha
   - `__init__.py`: Module initialization
 
 ### 5. Hotkey Management Agent
-- **Location**: `src/livesttt/hotkeys/`
+- **Location**: `src/bertytype/hotkeys/`
 - **Responsibilities**:
   - Register global hotkeys (push-to-talk, toggle, cancel)
   - Handle hotkey events and state transitions
@@ -61,7 +61,7 @@ Live STT is a modular, offline-first voice dictation application for Windows tha
   - `__init__.py`: Module initialization
 
 ### 6. User Interface Agent
-- **Location**: `src/livesttt/ui/`
+- **Location**: `src/bertytype/ui/`
 - **Responsibilities**:
   - System tray icon with context menu
   - Status indicators (recording, processing, ready)
@@ -73,7 +73,7 @@ Live STT is a modular, offline-first voice dictation application for Windows tha
   - `__init__.py`: Module initialization
 
 ### 7. Configuration Management
-- **Location**: `src/livesttt/config.py`
+- **Location**: `src/bertytype/config.py`
 - **Responsibilities**:
   - Centralized configuration loading/saving
   - Validation of user preferences
@@ -120,19 +120,19 @@ Live STT is a modular, offline-first voice dictation application for Windows tha
 ## Extensibility Points
 
 ### Adding New STT Engines:
-1. Create new engine module in `src/livesttt/stt/`
+1. Create new engine module in `src/bertytype/stt/`
 2. Implement standard interface (audio bytes → text)
 3. Update factory/selector in STT agent
 4. Add configuration options for engine selection
 
 ### Adding New Refinement Models:
-1. Create new client module in `src/livesttt/llm/`
+1. Create new client module in `src/bertytype/llm/`
 2. Implement standard interface (text → refined text)
 3. Update prompt templates as needed
 4. Add model selection to configuration
 
 ### Adding New Injection Methods:
-1. Create new injector/exporter in `src/livesttt/injection/`
+1. Create new injector/exporter in `src/bertytype/injection/`
 2. Implement standard interface (text → injection result)
 3. Update factory/selector in injection agent
 4. Add method selection to configuration

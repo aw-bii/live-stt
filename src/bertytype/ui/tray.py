@@ -56,7 +56,7 @@ def run(
         pystray.MenuItem("Settings", lambda icon, item: on_open_settings()),
         pystray.MenuItem("Quit", lambda icon, item: on_quit()),
     )
-    _icon = pystray.Icon("livesttt", _make_icon(_STATUS_COLORS["idle"]), "live-stt", menu)
+    _icon = pystray.Icon("bertytype", _make_icon(_STATUS_COLORS["idle"]), "live-stt", menu)
     _icon.run()
 
 

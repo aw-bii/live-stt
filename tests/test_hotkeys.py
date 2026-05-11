@@ -1,5 +1,5 @@
 from unittest.mock import patch, MagicMock
-from livesttt.hotkeys import daemon
+from bertytype.hotkeys import daemon
 
 
 def test_register_calls_keyboard_add_hotkey():

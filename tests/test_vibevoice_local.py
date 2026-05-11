@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import patch, MagicMock
 
-from livesttt.stt import vibevoice_local
+from bertytype.stt import vibevoice_local
 
 
 def test_is_available_returns_false_when_import_fails():

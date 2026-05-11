@@ -2,9 +2,9 @@ import json
 from dataclasses import dataclass, asdict
 from pathlib import Path
 
-from livesttt import logging as log_module
+from bertytype import logging as log_module
 
-CONFIG_PATH = Path.home() / ".livesttt" / "config.json"
+CONFIG_PATH = Path.home() / ".bertytype" / "config.json"
 
 logger = log_module.logger
 

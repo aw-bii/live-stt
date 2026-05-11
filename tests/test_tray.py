@@ -1,5 +1,5 @@
 from unittest.mock import MagicMock
-import livesttt.ui.tray as tray_module
+import bertytype.ui.tray as tray_module
 
 
 def test_notify_calls_icon_notify(monkeypatch):

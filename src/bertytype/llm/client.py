@@ -1,6 +1,6 @@
 import requests
 from concurrent.futures import ThreadPoolExecutor, Future
-from livesttt.llm.prompts import get_prompt
+from bertytype.llm.prompts import get_prompt
 
 OLLAMA_URL = "http://localhost:11434/api/generate"
 

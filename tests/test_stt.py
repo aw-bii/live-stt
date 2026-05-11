@@ -1,5 +1,5 @@
 import pytest
-from livesttt.stt import engine
+from bertytype.stt import engine
 
 
 def test_transcribe_raises_without_backend():

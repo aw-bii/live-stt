@@ -2,7 +2,7 @@ from __future__ import annotations
 import tkinter as tk
 import tkinter.messagebox
 from typing import Callable
-from livesttt.config import Config
+from bertytype.config import Config
 
 _MODIFIER_KEYSYMS = frozenset({
     "Control_L", "Control_R",

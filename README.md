@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="src/livesttt/assets/icon.png" alt="Live STT" width="128" height="128" />
+  <img src="src/bertytype/assets/icon.png" alt="BertyType" width="128" height="128" />
 </p>
 
-<h1 align="center">Live STT</h1>
+<h1 align="center">BertyType</h1>
 
 <p align="center">
   <strong>Local, offline voice dictation for Windows</strong><br>
@@ -13,14 +13,14 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License" /></a>
   <img src="https://img.shields.io/badge/platform-Windows%2010%2B-lightgrey?logo=windows" alt="Windows 10+" />
   <img src="https://img.shields.io/badge/python-3.10%2B-blue?logo=python&logoColor=white" alt="Python 3.10+" />
-  <a href="https://github.com/aw-bii/live-stt/actions"><img src="https://github.com/aw-bii/live-stt/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <a href="https://github.com/aw-bii/bertytype/actions"><img src="https://github.com/aw-bii/bertytype/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
 </p>
 
 ---
 
-## What is Live STT?
+## What is BertyType?
 
-Live STT is a **lightweight Windows tray app** that captures microphone audio, transcribes speech using VibeVoice, optionally refines the text with a local LLM, and injects the result into whatever window you have focused - system-wide, without any cloud dependency.
+BertyType is a **lightweight Windows tray app** that captures microphone audio, transcribes speech using VibeVoice, optionally refines the text with a local LLM, and injects the result into whatever window you have focused - system-wide, without any cloud dependency.
 
 ### Dictation
 
@@ -51,7 +51,7 @@ When Ollama is running locally, transcriptions are passed through Gemma 4 2B for
 
 ### Download (recommended)
 
-Download the latest `livesttt.exe` from [Releases](https://github.com/aw-bii/live-stt/releases), place it anywhere, and run it. No installer needed - the app appears in the system tray.
+Download the latest `bertytype.exe` from [Releases](https://github.com/aw-bii/bertytype/releases), place it anywhere, and run it. No installer needed - the app appears in the system tray.
 
 > **First run:** the VibeVoice speech model (~1 GB) downloads automatically on your first transcription. Expect a 1-2 minute delay the first time.
 > **Hotkeys:** run as Administrator if global hotkeys do not register. The `keyboard` library requires elevated permissions on some Windows configurations.
@@ -63,14 +63,14 @@ To start on login, place a shortcut to the exe in `shell:startup` (Win+R to open
 **Requirements:** Windows 10+, Python 3.10+
 
 ```bash
-git clone https://github.com/aw-bii/live-stt.git
-cd live-stt
+git clone https://github.com/aw-bii/bertytype.git
+cd bertytype
 
 python -m venv .venv
 .venv\Scripts\activate
 pip install -e .
 
-python -m livesttt
+python -m bertytype
 ```
 
 ### LLM refinement setup (optional)
@@ -88,8 +88,8 @@ This verifies Ollama is running and pulls `gemma4:2b` (~1.5 GB, one-time downloa
 ```bash
 pip install pyinstaller
 python scripts/make_ico.py
-pyinstaller livesttt.spec
-# output: dist/livesttt.exe
+pyinstaller bertytype.spec
+# output: dist/bertytype.exe
 ```
 
 ---
@@ -179,8 +179,8 @@ pyinstaller livesttt.spec
 Contributions welcome. To get started:
 
 ```bash
-git clone https://github.com/aw-bii/live-stt.git
-cd live-stt
+git clone https://github.com/aw-bii/bertytype.git
+cd bertytype
 python -m venv .venv
 .venv\Scripts\activate
 pip install -e ".[dev]"

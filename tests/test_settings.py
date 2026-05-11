@@ -1,4 +1,4 @@
-from livesttt.ui.settings import build_hotkey_string
+from bertytype.ui.settings import build_hotkey_string
 
 
 def test_returns_none_for_control_l():

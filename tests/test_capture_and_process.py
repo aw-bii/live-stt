@@ -1,7 +1,7 @@
 """Orchestration tests for _capture_and_process - the core mic-to-injection pipeline."""
 from unittest.mock import patch, MagicMock, call
-from livesttt import __main__ as app
-from livesttt.config import Config
+from bertytype import __main__ as app
+from bertytype.config import Config
 
 
 def _setup(health=None, cfg=None):
@@ -119,7 +119,7 @@ def test_injection_failure_copies_to_clipboard():
          patch.object(app.vad, "trim_silence", return_value=b"trimmed"), \
          patch.object(app.stt_engine, "transcribe", return_value="text"), \
          patch.object(app.injector, "inject", side_effect=Exception("inject failed")), \
-         patch("livesttt.__main__.pyperclip") as mock_clip, \
+         patch("bertytype.__main__.pyperclip") as mock_clip, \
          patch.object(app.tray, "set_status"), \
          patch.object(app.tray, "notify") as mock_notify:
         app._capture_and_process()

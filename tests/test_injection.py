@@ -1,7 +1,7 @@
 from pathlib import Path
 from unittest.mock import patch, call, MagicMock
-from livesttt.injection import injector
-from livesttt.injection import exporter
+from bertytype.injection import injector
+from bertytype.injection import exporter
 
 
 def test_inject_copies_text_to_clipboard():
