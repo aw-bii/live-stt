@@ -16,9 +16,12 @@ _BAR_HEIGHTS = [16, 32, 48, 32, 16]
 _BAR_WIDTH = 8
 _BAR_GAP = 4
 _CANVAS = 64
+_ICON_CACHE: dict[str, Image.Image] = {}
 
 
 def _make_icon(color: str) -> Image.Image:
+    if color in _ICON_CACHE:
+        return _ICON_CACHE[color]
     img = Image.new("RGBA", (_CANVAS, _CANVAS), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
     total_width = len(_BAR_HEIGHTS) * _BAR_WIDTH + (len(_BAR_HEIGHTS) - 1) * _BAR_GAP
@@ -28,11 +31,14 @@ def _make_icon(color: str) -> Image.Image:
         y_top = (_CANVAS - bar_h) // 2
         y_bot = y_top + bar_h
         draw.rounded_rectangle([x, y_top, x + _BAR_WIDTH, y_bot], radius=2, fill=color)
+    _ICON_CACHE[color] = img
     return img
 
 
 def set_status(status: str) -> None:
     global _status
+    if status == _status:
+        return
     _status = status
     if _icon:
         _icon.icon = _make_icon(_STATUS_COLORS.get(status, _STATUS_COLORS["error"]))

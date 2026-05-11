@@ -75,7 +75,7 @@ def open_settings(cfg: Config, on_save: Callable[[Config], None]) -> None:
 
     tk.Label(win, text="Double-tap window (s):").grid(row=row, column=0, padx=8, pady=4, sticky="w")
     double_tap_window_var = tk.DoubleVar(value=cfg.double_tap_window)
-    tk.Scale(win, from_=0.1, to=1.0, resolution=0.05, variable=double_tap_window_var,
+    tk.Scale(win, from_=0.05, to=2.0, resolution=0.05, variable=double_tap_window_var,
              orient="horizontal", length=150).grid(row=row, column=1, padx=8, sticky="w")
     row += 1
 
