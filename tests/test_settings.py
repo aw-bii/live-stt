@@ -40,3 +40,61 @@ def test_keysym_is_lowercased():
 
 def test_ctrl_shift_key_matches_config_default():
     assert build_hotkey_string(0x4 | 0x1, "space") == "ctrl+shift+space"
+
+
+import pytest
+
+
+@pytest.fixture(scope="module")
+def ctk_root():
+    try:
+        import customtkinter as ctk
+        ctk.set_appearance_mode("dark")
+        root = ctk.CTk()
+        root.withdraw()
+        yield root
+        root.destroy()
+    except Exception:
+        pytest.skip("No display available")
+
+
+def test_capture_initial_value(ctk_root):
+    from bertytype.ui.settings import _HotkeyCapture
+    cap = _HotkeyCapture(ctk_root, "ctrl+alt+space")
+    assert cap.get() == "ctrl+alt+space"
+
+
+def test_capture_key_updates_value(ctk_root):
+    from bertytype.ui.settings import _HotkeyCapture
+
+    class _Ev:
+        state = 0x4  # ctrl bit
+        keysym = "f9"
+
+    cap = _HotkeyCapture(ctk_root, "alt")
+    cap._active = True
+    cap._on_key(_Ev())
+    assert cap.get() == "ctrl+f9"
+
+
+def test_capture_focus_out_restores_previous(ctk_root):
+    from bertytype.ui.settings import _HotkeyCapture
+    cap = _HotkeyCapture(ctk_root, "escape")
+    cap._active = True
+    cap._prev = "escape"
+    cap._on_focus_out()
+    assert cap.get() == "escape"
+
+
+def test_capture_ignores_lone_modifier(ctk_root):
+    from bertytype.ui.settings import _HotkeyCapture
+
+    class _Ev:
+        state = 0x4
+        keysym = "Control_L"
+
+    cap = _HotkeyCapture(ctk_root, "alt")
+    cap._active = True
+    cap._on_key(_Ev())
+    assert cap._active is True
+    assert cap.get() == "alt"

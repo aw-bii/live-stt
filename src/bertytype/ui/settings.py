@@ -1,14 +1,24 @@
 from __future__ import annotations
 import tkinter as tk
-import tkinter.messagebox
+import customtkinter as ctk
 from typing import Callable
 from bertytype.config import Config
 
+_BG          = "#0f0f0f"
+_BG_ELEVATED = "#1e1e1e"
+_BORDER      = "#272727"
+_GREEN       = "#1ed760"
+_GREEN_HVR   = "#22e865"
+_TEXT        = "#f0f0f0"
+_HINT        = "#444444"
+_TEXT_DIM    = "#888888"
+_RED         = "#e84040"
+_FONT        = ("Consolas", 11)
+_FONT_SM     = ("Consolas", 9)
+
 _MODIFIER_KEYSYMS = frozenset({
-    "Control_L", "Control_R",
-    "Shift_L", "Shift_R",
-    "Alt_L", "Alt_R",
-    "Meta_L", "Meta_R",
+    "Control_L", "Control_R", "Shift_L", "Shift_R",
+    "Alt_L", "Alt_R", "Meta_L", "Meta_R",
 })
 
 
@@ -26,111 +36,72 @@ def build_hotkey_string(state: int, keysym: str) -> str | None:
     return "+".join(parts)
 
 
-class _HotkeyCapture(tk.Frame):
-    def __init__(self, parent: tk.Misc, value: str) -> None:
-        super().__init__(parent)
-        self._prev = value
-        self._var = tk.StringVar(value=value)
-        entry = tk.Entry(self, textvariable=self._var, width=24)
-        entry.pack()
-        entry.bind("<FocusIn>", self._on_focus_in)
-        entry.bind("<FocusOut>", self._on_focus_out)
-        entry.bind("<KeyPress>", self._on_key)
+class _HotkeyCapture(ctk.CTkFrame):
+    def __init__(self, parent: ctk.CTkBaseClass, value: str) -> None:
+        super().__init__(
+            parent,
+            fg_color=_BG_ELEVATED, border_color=_BORDER,
+            border_width=1, corner_radius=6, cursor="hand2",
+        )
+        self._prev   = value
+        self._value  = value
+        self._active = False
+        self._inner  = ctk.CTkFrame(self, fg_color="transparent")
+        self._inner.pack(padx=9, pady=5)
+        self._render(value)
+        self.bind("<Button-1>", self._start_capture)
+        self._inner.bind("<Button-1>", self._start_capture)
+        self.bind("<FocusOut>", self._on_focus_out)
+        self.bind("<KeyPress>", self._on_key)
+        tk.Widget.configure(self, takefocus=True)
 
-    def _on_focus_in(self, _: tk.Event) -> None:
-        self._prev = self._var.get()
-        self._var.set("Press hotkey...")
+    def _render(self, value: str) -> None:
+        for w in self._inner.winfo_children():
+            w.destroy()
+        if not value or value == "Press hotkey...":
+            ctk.CTkLabel(
+                self._inner, text=value or "Press hotkey...",
+                font=_FONT_SM, text_color=_HINT,
+            ).pack(side="left")
+            return
+        for i, part in enumerate(value.split("+")):
+            if i:
+                ctk.CTkLabel(
+                    self._inner, text="+", font=_FONT_SM, text_color=_HINT,
+                ).pack(side="left", padx=2)
+            badge = ctk.CTkFrame(
+                self._inner, fg_color="#1a1a1a",
+                border_color=_BORDER, border_width=1, corner_radius=4,
+            )
+            badge.pack(side="left", padx=1)
+            ctk.CTkLabel(
+                badge, text=part, font=_FONT_SM, text_color=_TEXT_DIM,
+            ).pack(padx=5, pady=2)
 
-    def _on_focus_out(self, _: tk.Event) -> None:
-        if self._var.get() == "Press hotkey...":
-            self._var.set(self._prev)
+    def _start_capture(self, _event=None) -> None:
+        self._prev   = self._value
+        self._active = True
+        self.configure(border_color=_GREEN)
+        self._render("Press hotkey...")
+        self.focus_set()
 
-    def _on_key(self, event: tk.Event) -> str:
+    def _on_focus_out(self, _event=None) -> None:
+        if self._active:
+            self._active = False
+            self.configure(border_color=_BORDER)
+            self._value = self._prev
+            self._render(self._prev)
+
+    def _on_key(self, event) -> str:
+        if not self._active:
+            return ""
         result = build_hotkey_string(int(event.state), event.keysym)
         if result is not None:
-            self._var.set(result)
+            self._active = False
+            self.configure(border_color=_BORDER)
+            self._value  = result
+            self._render(result)
         return "break"
 
     def get(self) -> str:
-        v = self._var.get()
-        return self._prev if v == "Press hotkey..." else v
-
-
-def open_settings(cfg: Config, on_save: Callable[[Config], None]) -> None:
-    win = tk.Tk()
-    win.title("BertyType settings")
-    win.resizable(False, False)
-
-    row = 0
-
-    tk.Label(win, text="Mode:").grid(row=row, column=0, padx=8, pady=4, sticky="w")
-    mode_var = tk.StringVar(value=cfg.hotkey_mode)
-    tk.OptionMenu(win, mode_var, "double_tap_toggle", "ptt").grid(row=row, column=1, padx=8, sticky="w")
-    row += 1
-
-    tk.Label(win, text="Hotkey:").grid(row=row, column=0, padx=8, pady=4, sticky="w")
-    hotkey_capture = _HotkeyCapture(win, value=cfg.hotkey)
-    hotkey_capture.grid(row=row, column=1, padx=8)
-    row += 1
-
-    tk.Label(win, text="Double-tap window (s):").grid(row=row, column=0, padx=8, pady=4, sticky="w")
-    double_tap_window_var = tk.DoubleVar(value=cfg.double_tap_window)
-    tk.Scale(win, from_=0.05, to=2.0, resolution=0.05, variable=double_tap_window_var,
-             orient="horizontal", length=150).grid(row=row, column=1, padx=8, sticky="w")
-    row += 1
-
-    tk.Label(win, text="Cancel:").grid(row=row, column=0, padx=8, pady=4, sticky="w")
-    cancel_capture = _HotkeyCapture(win, value=cfg.cancel_hotkey)
-    cancel_capture.grid(row=row, column=1, padx=8)
-    row += 1
-
-    tk.Label(win, text="LLM Model:").grid(row=row, column=0, padx=8, pady=4, sticky="w")
-    model_var = tk.StringVar(value=cfg.model)
-    tk.Entry(win, textvariable=model_var, width=24).grid(row=row, column=1, padx=8)
-    row += 1
-
-    refine_var = tk.BooleanVar(value=cfg.refine)
-    tk.Checkbutton(win, text="Refine with LLM", variable=refine_var).grid(
-        row=row, column=0, columnspan=2, padx=8, pady=4, sticky="w"
-    )
-    row += 1
-
-    tk.Label(win, text="VAD Threshold:").grid(row=row, column=0, padx=8, pady=4, sticky="w")
-    vad_var = tk.DoubleVar(value=cfg.vad_threshold)
-    tk.Scale(win, from_=0.0, to=0.5, resolution=0.01, variable=vad_var,
-             orient="horizontal", length=150).grid(row=row, column=1, padx=8, sticky="w")
-    row += 1
-
-    tk.Label(win, text="LLM Timeout (s):").grid(row=row, column=0, padx=8, pady=4, sticky="w")
-    llm_timeout_var = tk.IntVar(value=cfg.llm_timeout)
-    tk.Entry(win, textvariable=llm_timeout_var, width=8).grid(row=row, column=1, padx=8, sticky="w")
-    row += 1
-
-    tk.Label(win, text="Injection Delay (s):").grid(row=row, column=0, padx=8, pady=4, sticky="w")
-    injection_delay_var = tk.DoubleVar(value=cfg.injection_delay)
-    tk.Entry(win, textvariable=injection_delay_var, width=8).grid(row=row, column=1, padx=8, sticky="w")
-    row += 1
-
-    def _save() -> None:
-        try:
-            updated = Config(
-                hotkey=hotkey_capture.get(),
-                cancel_hotkey=cancel_capture.get(),
-                model=model_var.get().strip(),
-                refine=refine_var.get(),
-                vad_threshold=vad_var.get(),
-                hotkey_mode=mode_var.get(),
-                double_tap_window=double_tap_window_var.get(),
-                llm_timeout=llm_timeout_var.get(),
-                injection_delay=injection_delay_var.get(),
-            )
-        except tk.TclError as e:
-            tk.messagebox.showerror("Invalid input", f"Please correct the highlighted fields.\n\n{e}")
-            return
-        on_save(updated)
-        win.destroy()
-
-    tk.Button(win, text="Save", command=_save).grid(
-        row=row, column=0, columnspan=2, pady=8
-    )
-    win.mainloop()
+        return self._value
