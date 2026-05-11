@@ -6,6 +6,7 @@ def main() -> None:
     root = tk.Tk()
     Wizard(root)
     root.mainloop()
+    root.destroy()
 
 
 if __name__ == "__main__":

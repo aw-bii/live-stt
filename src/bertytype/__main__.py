@@ -1,5 +1,6 @@
 from __future__ import annotations
 import threading
+import tkinter as tk
 import tkinter.filedialog
 from pathlib import Path
 import pyperclip
@@ -185,10 +186,24 @@ def _periodic_health_check(interval: int = 60) -> None:
         _quit_event.wait(interval)
 
 
+def _run_setup_if_needed() -> bool:
+    from bertytype_setup.checks import check_all
+    from bertytype_setup.wizard import Wizard
+    if all(check_all().values()):
+        return True
+    root = tk.Tk()
+    wizard = Wizard(root)
+    root.mainloop()
+    root.destroy()
+    return wizard.launch_requested
+
+
 def main() -> None:
     log_module.init_file_logging()
     global _cfg
     _cfg = cfg_module.load()
+    if not _run_setup_if_needed():
+        return
 
     if vibevoice_local.is_available():
         stt_engine.set_backend(vibevoice_local.transcribe)

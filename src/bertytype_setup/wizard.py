@@ -1,8 +1,5 @@
 from __future__ import annotations
-import os
 import queue
-import subprocess
-import sys
 import threading
 from typing import Callable
 
@@ -213,6 +210,7 @@ class Wizard:
         self._failures: list[str] = []
         self._steps_to_install: list[str] = []
         self._install_frame: InstallFrame | None = None
+        self.launch_requested: bool = True
         self._show_welcome()
 
     def _clear(self) -> None:
@@ -305,8 +303,5 @@ class Wizard:
             self._failures = []
             self._start_install()
             return
-        if launch:
-            exe = os.path.join(os.path.dirname(sys.executable), "bertytype.exe")
-            if os.path.exists(exe):
-                subprocess.Popen([exe])
-        self._root.destroy()
+        self.launch_requested = launch
+        self._root.quit()
