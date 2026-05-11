@@ -1,92 +1,83 @@
 # Live STT
 
-A local, offline voice-dictation app for Windows that provides real-time speech-to-text transcription with optional LLM refinement.
-
-## Overview
-
-Live STT captures microphone audio, transcribes speech using VibeVoice (local STT via Transformers), optionally refines the text with a local LLM (via Ollama), and injects the result into whatever window you have focused - all without any cloud dependency.
+A local, offline voice-dictation app for Windows. Hold or double-tap a hotkey to record speech; it transcribes and injects the result into whatever window you have focused - no cloud, no server, no data leaves your machine.
 
 ## Features
 
-- **Real-time Speech Recognition**: Push-to-talk recording (hold hotkey)
-- **Local STT**: Uses VibeVoice-ASR via HuggingFace Transformers (no external server needed)
-- **Fallback STT**: Falls back to vLLM HTTP if local model unavailable
-- **Optional LLM Refinement**: Improve transcriptions with local LLM via Ollama
-- **System-wide Injection**: Works in any application via clipboard + Ctrl+V
-- **File Transcription**: Transcribe existing audio files (WAV, MP3, M4A, FLAC)
-- **Customizable Hotkeys**: Configure push-to-talk and cancel hotkeys
-- **Settings UI**: Configure model, VAD threshold, timeouts, and more
-- **Health Monitoring**: Automatic detection of service availability
-- **Privacy First**: No data leaves your computer
-
-## Documentation
-
-For detailed information about the project:
-
-- **[PRODUCT.md](PRODUCT.md)** - Product requirements, vision, and user stories
-- **[ARCHITECTURE.md](ARCHITECTURE.md)** - System architecture and component design
-- **[AGENTS.md](AGENTS.md)** - Agent configurations and responsibilities
-- **[DESIGN.md](DESIGN.md)** - Design specifications and guidelines
-- **[CLAUDE.md](CLAUDE.md)** - Guidance for AI assistants working with this codebase
+- **Double-tap toggle or push-to-talk**: double-tap Alt to start/stop, or hold any key for push-to-talk
+- **Local STT**: VibeVoice-ASR via HuggingFace Transformers (no external server needed)
+- **HTTP STT fallback**: falls back to vLLM HTTP if local model is unavailable
+- **Optional LLM refinement**: cleans up transcriptions with a local LLM via Ollama
+- **System-wide injection**: works in any app via clipboard + Ctrl+V simulation
+- **File transcription**: transcribe WAV, MP3, M4A, FLAC files from the tray menu
+- **Settings UI**: configure mode, hotkey, model, VAD sensitivity, and timeouts
+- **Privacy-first**: no audio or text ever leaves your computer
 
 ## Quick Start
 
 ```bash
-# Clone the repository
-git clone <repository-url>
-cd "Live STT"
+git clone https://github.com/aw-bii/live-stt.git
+cd live-stt
 
-# Create and activate virtual environment
 python -m venv .venv
-.\.venv\Scripts\activate
-
-# Install dependencies
+.venv\Scripts\activate
 pip install -e .
 
-# Optional: Install Ollama for LLM refinement
-# Download from https://ollama.com
-ollama pull gemma4
+# Optional: set up Ollama for LLM refinement
+python scripts/setup_ollama.py
 
-# Run the application
-python -m src.livesttt
+python -m livesttt
 ```
 
 ## Usage
 
-1. **Start the app**: Runs in system tray
-2. **Push-to-talk**: Hold the configured hotkey (default: Space) to record
-3. **Release to transcribe**: Audio is transcribed and injected into focused window
-4. **Cancel**: Press Escape during recording to cancel
-5. **Settings**: Right-click tray icon → Settings to configure
-   - Push-to-talk hotkey
-   - Cancel hotkey
-   - LLM model name
-   - Enable/disable refinement
-   - VAD threshold (speech detection sensitivity)
-   - Timeouts
+1. **Start the app** - it runs silently in the system tray
+2. **Record** - double-tap Alt (default) to start recording; double-tap again to stop and transcribe
+3. **Push-to-talk mode** - switch to PTT in Settings if you prefer hold-to-record
+4. **Cancel** - press Escape during recording to abort
+5. **File transcription** - right-click the tray icon, choose "Transcribe file..."
+6. **Settings** - right-click the tray icon, choose "Settings" to configure:
+   - Hotkey mode (double-tap toggle or push-to-talk)
+   - Hotkey key
+   - LLM model and refinement toggle
+   - VAD threshold, timeouts, injection delay
 
 ## Prerequisites
 
-- Windows 10+ (64-bit recommended)
+- Windows 10+ (64-bit)
 - Python 3.10+
-- 8GB RAM recommended (4GB minimum without LLM)
-- Microphone for speech input
+- 8 GB RAM recommended (4 GB minimum without LLM)
+- Microphone
 - **ffmpeg** (optional - required for MP3, M4A, FLAC file support)
-  - Install via `winget install ffmpeg` or download from https://ffmpeg.org
+  - Install: `winget install ffmpeg`
 
-## Building .exe
+## LLM Refinement (optional)
+
+Install [Ollama](https://ollama.com), then run the setup helper:
+
+```bash
+python scripts/setup_ollama.py
+```
+
+This checks that Ollama is running and pulls `gemma4:2b` (~1.5 GB, one-time download). Once done, refinement is enabled automatically on next launch.
+
+## Building the .exe
 
 ```bash
 pip install pyinstaller
+python scripts/make_ico.py   # generates the app icon
 pyinstaller livesttt.spec
+# output: dist/livesttt.exe
 ```
+
+Pre-built binaries are attached to each [GitHub release](https://github.com/aw-bii/live-stt/releases).
 
 ## Running Tests
 
 ```bash
-pytest tests/ -v
+.venv\Scripts\python.exe -m pytest tests/ -v
 ```
 
 ## License
 
-See [LICENSE](LICENSE) for licensing information.
+[MIT](LICENSE)
