@@ -20,6 +20,7 @@ dependencies = [
     "pyautogui>=0.9",
     "requests>=2.31",
     "loguru>=0.7",
+    "imageio-ffmpeg>=0.4",
 ]
 
 [project.optional-dependencies]

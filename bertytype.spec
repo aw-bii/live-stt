@@ -10,6 +10,7 @@ a = Analysis(
     datas=[
         ('src/bertytype', 'bertytype'),
         *collect_data_files('sounddevice'),
+        *collect_data_files('imageio_ffmpeg'),
     ],
     hiddenimports=[
         'PIL',
@@ -31,6 +32,7 @@ a = Analysis(
         'pythoncom',
         'pywintypes',
         'pyautogui._pyautogui_win',
+        'imageio_ffmpeg',
     ],
     hookspath=[],
     hooksconfig={},
