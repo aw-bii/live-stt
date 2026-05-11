@@ -65,8 +65,6 @@ def test_is_vibevoice_cached_true(tmp_path):
     (model_dir / "model.safetensors").write_bytes(b"fake")
     with patch("bertytype_setup.checks._hf_cache_root", return_value=tmp_path):
         from bertytype_setup import checks
-        import importlib
-        importlib.reload(checks)
         assert checks.is_vibevoice_cached() is True
 
 
