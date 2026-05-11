@@ -179,6 +179,7 @@ def _periodic_health_check(interval: int = 60) -> None:
 
 
 def main() -> None:
+    log_module.init_file_logging()
     global _cfg, _health
     _cfg = cfg_module.load()
 
