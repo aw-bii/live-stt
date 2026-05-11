@@ -22,6 +22,7 @@ dependencies = [
     "loguru>=0.7",
     "imageio-ffmpeg>=0.4",
     "huggingface_hub>=0.20",
+    "customtkinter>=5.2",
 ]
 
 [project.optional-dependencies]

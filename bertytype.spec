@@ -13,6 +13,7 @@ a = Analysis(
         *collect_data_files('sounddevice'),
         *collect_data_files('imageio_ffmpeg'),
         *collect_data_files('certifi'),
+        *collect_data_files('customtkinter'),
     ],
     hiddenimports=[
         'PIL',
@@ -40,6 +41,7 @@ a = Analysis(
         'filelock',
         'packaging',
         'tqdm',
+        'customtkinter',
     ],
     hookspath=[],
     hooksconfig={},
