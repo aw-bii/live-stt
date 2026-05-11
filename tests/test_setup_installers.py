@@ -157,3 +157,55 @@ def test_pull_model_nonzero_exit():
         result = installers.pull_model(q, cancel)
 
     assert result is False
+
+
+def test_download_vibevoice_success():
+    cancel = threading.Event()
+    q = queue.Queue()
+
+    fake_files = ["config.json", "tokenizer.json", "model.safetensors"]
+
+    from bertytype_setup import installers
+    with patch.object(installers, "_list_hf_files", return_value=fake_files), \
+         patch.object(installers, "_hf_download_file") as mock_dl:
+        result = installers.download_vibevoice(q, cancel)
+
+    assert result is True
+    assert mock_dl.call_count == 3
+    events = _drain(q)
+    progress_events = [e for e in events if e[0] == "step_progress" and e[1] == "vibevoice"]
+    assert len(progress_events) == 3
+    assert progress_events[-1][2] == pytest.approx(1.0)
+
+
+def test_download_vibevoice_cancelled_between_files():
+    cancel = threading.Event()
+    q = queue.Queue()
+
+    fake_files = ["config.json", "model.safetensors"]
+    call_count = [0]
+
+    def mock_dl(*a, **kw):
+        call_count[0] += 1
+        if call_count[0] >= 1:
+            cancel.set()
+
+    from bertytype_setup import installers
+    with patch.object(installers, "_list_hf_files", return_value=fake_files), \
+         patch.object(installers, "_hf_download_file", side_effect=mock_dl):
+        result = installers.download_vibevoice(q, cancel)
+
+    assert result is False
+
+
+def test_download_vibevoice_file_fetch_error():
+    cancel = threading.Event()
+    q = queue.Queue()
+
+    from bertytype_setup import installers
+    with patch.object(installers, "_list_hf_files", side_effect=Exception("network error")):
+        result = installers.download_vibevoice(q, cancel)
+
+    assert result is False
+    events = _drain(q)
+    assert any("network error" in str(e) for e in events)

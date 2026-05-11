@@ -132,3 +132,39 @@ def pull_model(q: queue.Queue, cancel: threading.Event, model: str = MODEL) -> b
     except Exception as e:
         _post(q, "log", f"Model pull failed: {e}")
         return False
+
+
+def _list_hf_files(repo_id: str) -> list[str]:
+    from huggingface_hub import list_repo_files
+    return list(list_repo_files(repo_id))
+
+
+def _hf_download_file(repo_id: str, filename: str) -> None:
+    from huggingface_hub import hf_hub_download
+    hf_hub_download(repo_id=repo_id, filename=filename)
+
+
+def download_vibevoice(q: queue.Queue, cancel: threading.Event) -> bool:
+    """Download VibeVoice ASR model files to the HuggingFace cache."""
+    if cancel.is_set():
+        return False
+    _post(q, "log", "Fetching VibeVoice file list from Hugging Face...")
+    try:
+        files = _list_hf_files(VIBEVOICE_REPO)
+    except Exception as e:
+        _post(q, "log", f"Failed to fetch file list: {e}")
+        return False
+
+    total = len(files)
+    for i, filename in enumerate(files):
+        if cancel.is_set():
+            return False
+        _post(q, "log", f"Downloading {filename} ({i + 1}/{total})...")
+        try:
+            _hf_download_file(VIBEVOICE_REPO, filename)
+        except Exception as e:
+            _post(q, "log", f"Failed to download {filename}: {e}")
+            return False
+        _post(q, "step_progress", "vibevoice", (i + 1) / total)
+
+    return True
