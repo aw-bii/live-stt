@@ -12,54 +12,42 @@
 
 ## UX / Polish (completed)
 
-- [x] **"Transcript saved" tray notification** - Implemented in `__main__.py` with `messages.INFO_TRANSCRIPTION_COMPLETE`
-- [x] **Hotkey picker in settings** - Enhanced with key capture, cancel hotkey, and timeout settings
-- [x] **Cancel hotkey** - Implemented with Escape key by default. Press during recording to abort.
+- [x] **"Transcript saved" tray notification** - Now includes filename: `"Transcript saved: {name}"`
+- [x] **Hotkey picker in settings** - Mode dropdown (double-tap toggle / PTT), key capture, cancel hotkey, double-tap window, and all other settings
+- [x] **Cancel hotkey** - Escape key by default. Press during recording to abort.
+- [x] **Double-tap Alt toggle mode** - Default hotkey mode. Double-tap Alt to start, double-tap again to stop.
+- [x] **Waveform tray icon** - 5-bar waveform rendered with PIL. Colors: green (idle), red (recording), orange (processing), gray (error).
+- [x] **Ollama auto-pull** - On startup, if Ollama is running but `gemma4:2b` is not pulled, auto-pulls in background with tray notification.
+- [x] **setup_ollama.py** - `scripts/setup_ollama.py` for first-run Ollama + model installation.
 
----
+## Bugs - Critical (all completed)
 
-## Bugs - Critical
+- [x] **PTT hotkey strips modifiers** - Fixed in 16162ab
+- [x] **`is_available()` loads the full model** - Fixed in 0b5124b
+- [x] **Health monitor thread is unstoppable** - Fixed in 1826f7c
+- [x] **Race condition on `_health` dict** - Fixed in 4592139
+- [x] **`refine_async` ThreadPoolExecutor never shut down** - Fixed in cb08f30
+- [x] **Untracked `launch.py` shadows entry point** - Deleted
 
-- [x] **PTT hotkey strips modifiers - intercepts plain Space globally** - Fixed in 16162ab: `register_ptt` now uses `keyboard.add_hotkey` with the full combo string and `trigger_on_release`.
+## Bugs - Important (all completed)
 
-- [x] **`is_available()` loads the full model instead of checking** - Fixed in 0b5124b: now checks `import transformers` only; model loading deferred to first `transcribe()` call.
+- [x] **File transcription injects into random active window** - Removed `inject()` from `_on_transcribe_file`; clipboard copy and `.txt` save are sufficient.
+- [x] **Tk Alt modifier mask wrong on Windows** - Fixed `0x8` to `0x20000` in `settings.py`.
+- [x] **Startup blocks main thread before tray appears** - Removed synchronous `_check_health()` from `main()`; health monitor thread handles the first check.
+- [x] **`transformers` and `torch` are hard dependencies** - Moved to `[project.optional-dependencies] local-stt`.
+- [x] **`Config.stt_timeout` declared but never used** - Removed from `Config` dataclass.
+- [x] **Three identical `except` arms in `_capture_and_process`** - Collapsed to single `except Exception`.
+- [x] **Config not validated on save** - `_save()` in settings now wraps Tk `.get()` calls in `try/except tk.TclError`.
+- [x] **Cancel only aborts during recording** - Limitation documented; cancel checks `_cancel_event` only after `start_recording` returns.
 
-- [x] **Health monitor thread is unstoppable** - Fixed in 1826f7c: module-level `_quit_event` shared between `_periodic_health_check` and `_on_quit`.
+## Polish - Minor (all completed)
 
-- [x] **Race condition on `_health` dict** - Fixed in 4592139: `_health_lock` protects all reads and writes; worker threads use `_health.copy()` snapshot.
+- [x] **`INFO_TRANSCRIPTION_COMPLETE` should include filename** - Now `"Transcript saved: {name}"` formatted at call site.
+- [x] **`__import__("pyperclip")` used twice as fallback** - Hoisted to top-level import.
+- [x] **`logging.py` runs `mkdir` at import time** - Moved to `log_module.init_file_logging()` called from `main()`.
 
-- [x] **`refine_async` ThreadPoolExecutor is never shut down** - Fixed in cb08f30: `llm_client.shutdown(cancel_futures=True)` called in `_on_quit`.
+## Remaining
 
-- [x] **Untracked `launch.py` shadows the real entry point** - Fixed: file deleted.
-
-## Bugs - Important
-
-- [ ] **File transcription injects into a random active window** - `__main__.py:112` calls `injector.inject()` after the file dialog closes, pasting into whatever window regains focus. Drop the `inject()` call from `_on_transcribe_file`; clipboard copy and `.txt` save are sufficient.
-
-- [ ] **Tk Alt modifier mask is wrong on Windows** - `ui/settings.py:23` uses `0x8` for Alt, which is the Mod1/NumLock bit on Windows Tk. The correct mask for Alt on Windows is `0x20000`. The hotkey picker will silently produce wrong strings for any Alt combo.
-
-- [ ] **Startup blocks the main thread before tray appears** - `main()` calls `_check_health()` synchronously, which does a 5 s Ollama HTTP probe plus a potential model load, all before `tray.run()`. Move the initial health check off the main thread so the tray icon appears immediately.
-
-- [ ] **`transformers` and `torch` are hard dependencies** - `pyproject.toml:22-23` lists them as required, forcing a multi-GB install for every user even if they only use the HTTP backend. Move to `[project.optional-dependencies] local-stt = ["transformers>=4.50", "torch>=2.0"]`.
-
-- [ ] **No orchestration test for `_capture_and_process`** - The main pipeline function is completely untested. Add a test that mocks `capture`, `vad`, `stt_engine`, `llm_client`, `injector`, and `tray`, and asserts the happy path, cancel path, and each failure mode.
-
-- [ ] **`Config.stt_timeout` is declared but never used** - `config.py:20` adds the field; no code reads it. The HTTP STT call hardcodes `timeout=60` in `vibevoice.py:26`. Either wire it through or remove it.
-
-- [ ] **Three identical `except` arms in `_capture_and_process`** - `__main__.py:58-66`: all three arms log a warning and send the same notification. Collapse to a single `except Exception` block.
-
-- [ ] **Config not validated on save** - `ui/settings.py:102-114`: Tk `.get()` calls on `IntVar`/`DoubleVar` can raise `TclError` if the field contains non-numeric text, crashing the settings dialog without feedback. Wrap in try/except or validate before constructing `Config`.
-
-- [ ] **Cancel only aborts during recording, not during STT/LLM** - `__main__.py:45` checks `_cancel_event` only after `start_recording` returns. Pressing Escape while transcription or refinement is running has no effect. Document this limitation or thread the cancel check through the processing stages.
-
-## Polish - Minor
-
-- [ ] **`INFO_TRANSCRIPTION_COMPLETE` should include the saved filename** - `messages.py` has a static string `"Transcription complete"`. The original plan specified `f"Done - transcript saved to {out_path.name}"`. Pass the path at the call site.
-
-- [ ] **`__import__("pyperclip")` used twice as a fallback** - `__main__.py:73,115`: hoist to a normal top-level import.
-
-- [ ] **PyInstaller spec hardcodes `.venv` path for sounddevice data** - `livesttt.spec:11`: breaks for any venv not named `.venv`. Use `collect_data_files("sounddevice")` from `PyInstaller.utils.hooks` instead.
-
-- [ ] **`logging.py` runs `mkdir` at import time** - `logging.py:16`: importing the module from a read-only context (e.g. a test with a monkeypatched home dir) can fail. Lazy-init the log directory on first use.
-
-- [ ] **Add `mypy` or `pyright` to CI** - The codebase uses PEP 604 union syntax and `from __future__ import annotations`; a type check step is cheap and would catch future type regressions.
+- [ ] **PyInstaller spec hardcodes `.venv` path for sounddevice data** - `livesttt.spec:11`: use `collect_data_files("sounddevice")` from `PyInstaller.utils.hooks`.
+- [ ] **Add `mypy` or `pyright` to CI** - Cheap type-check step would catch regressions.
+- [ ] **No orchestration test for `_capture_and_process`** - Core pipeline untested; add test mocking capture/vad/stt/llm/injector for happy path and cancel.
