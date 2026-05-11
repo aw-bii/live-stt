@@ -168,3 +168,35 @@ def download_vibevoice(q: queue.Queue, cancel: threading.Event) -> bool:
         _post(q, "step_progress", "vibevoice", (i + 1) / total)
 
     return True
+
+
+def run_all_installs(
+    q: queue.Queue,
+    cancel: threading.Event,
+    steps: list[str],
+) -> None:
+    """Run install steps sequentially. steps is the list of keys needing installation."""
+    results: dict[str, bool] = {}
+
+    if "ollama" in steps:
+        _post(q, "step_start", "ollama")
+        ok = install_ollama(q, cancel)
+        results["ollama"] = ok
+        _post(q, "step_done" if ok else "step_failed", "ollama")
+    elif "model" in steps:
+        results["ollama"] = _ensure_ollama_service(q, cancel)
+
+    if "model" in steps:
+        if not results.get("ollama", True):
+            _post(q, "step_skipped", "model")
+        else:
+            _post(q, "step_start", "model")
+            ok = pull_model(q, cancel)
+            _post(q, "step_done" if ok else "step_failed", "model")
+
+    if "vibevoice" in steps:
+        _post(q, "step_start", "vibevoice")
+        ok = download_vibevoice(q, cancel)
+        _post(q, "step_done" if ok else "step_failed", "vibevoice")
+
+    _post(q, "all_done", results)

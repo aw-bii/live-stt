@@ -209,3 +209,69 @@ def test_download_vibevoice_file_fetch_error():
     assert result is False
     events = _drain(q)
     assert any("network error" in str(e) for e in events)
+
+
+def test_run_all_installs_all_steps():
+    cancel = threading.Event()
+    q = queue.Queue()
+
+    from bertytype_setup import installers
+    with patch.object(installers, "install_ollama", return_value=True) as mock_ol, \
+         patch.object(installers, "_ensure_ollama_service", return_value=True), \
+         patch.object(installers, "pull_model", return_value=True) as mock_pm, \
+         patch.object(installers, "download_vibevoice", return_value=True) as mock_vv:
+        installers.run_all_installs(q, cancel, ["ollama", "model", "vibevoice"])
+
+    mock_ol.assert_called_once()
+    mock_pm.assert_called_once()
+    mock_vv.assert_called_once()
+    events = _drain(q)
+    assert ("step_done", "ollama") in events
+    assert ("step_done", "model") in events
+    assert ("step_done", "vibevoice") in events
+    assert any(e[0] == "all_done" for e in events)
+
+
+def test_run_all_installs_model_skipped_if_ollama_failed():
+    cancel = threading.Event()
+    q = queue.Queue()
+
+    from bertytype_setup import installers
+    with patch.object(installers, "install_ollama", return_value=False), \
+         patch.object(installers, "pull_model") as mock_pm, \
+         patch.object(installers, "download_vibevoice", return_value=True):
+        installers.run_all_installs(q, cancel, ["ollama", "model", "vibevoice"])
+
+    mock_pm.assert_not_called()
+    events = _drain(q)
+    assert ("step_failed", "ollama") in events
+    assert ("step_skipped", "model") in events
+
+
+def test_run_all_installs_only_vibevoice():
+    cancel = threading.Event()
+    q = queue.Queue()
+
+    from bertytype_setup import installers
+    with patch.object(installers, "install_ollama") as mock_ol, \
+         patch.object(installers, "_ensure_ollama_service", return_value=True), \
+         patch.object(installers, "pull_model") as mock_pm, \
+         patch.object(installers, "download_vibevoice", return_value=True):
+        installers.run_all_installs(q, cancel, ["vibevoice"])
+
+    mock_ol.assert_not_called()
+    mock_pm.assert_not_called()
+
+
+def test_run_all_installs_model_only_ensures_service():
+    cancel = threading.Event()
+    q = queue.Queue()
+
+    from bertytype_setup import installers
+    with patch.object(installers, "install_ollama") as mock_ol, \
+         patch.object(installers, "_ensure_ollama_service", return_value=True) as mock_svc, \
+         patch.object(installers, "pull_model", return_value=True):
+        installers.run_all_installs(q, cancel, ["model"])
+
+    mock_ol.assert_not_called()
+    mock_svc.assert_called_once()
