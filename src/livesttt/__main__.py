@@ -2,6 +2,7 @@ from __future__ import annotations
 import threading
 import tkinter.filedialog
 from pathlib import Path
+import pyperclip
 import requests
 
 from livesttt import config as cfg_module
@@ -59,12 +60,6 @@ def _capture_and_process() -> None:
             try:
                 future = llm_client.refine_async(text, "clean_up", _cfg.model, _cfg.llm_timeout)
                 text = future.result(timeout=_cfg.llm_timeout + 5)
-            except requests.ConnectionError as e:
-                logger.warning(f"LLM refinement failed: {e}")
-                tray.notify(messages.ERROR_OLLAMA_UNAVAILABLE)
-            except TimeoutError as e:
-                logger.warning(f"LLM refinement timed out: {e}")
-                tray.notify(messages.ERROR_OLLAMA_UNAVAILABLE)
             except Exception as e:
                 logger.warning(f"LLM refinement failed: {e}")
                 tray.notify(messages.ERROR_OLLAMA_UNAVAILABLE)
@@ -74,14 +69,9 @@ def _capture_and_process() -> None:
             injector.inject(text, _cfg.injection_delay)
         except Exception as e:
             logger.warning(f"Injection failed: {e}")
-            pyperclip = __import__("pyperclip")
             pyperclip.copy(text)
             tray.notify(messages.ERROR_INJECTION_FAILED)
         tray.set_status("idle")
-    except (requests.ConnectionError, requests.Timeout) as e:
-        logger.error(f"VibeVoice unavailable: {e}")
-        tray.set_status("error")
-        tray.notify(messages.ERROR_VIBEVOICE_UNAVAILABLE)
     except Exception as e:
         logger.exception(f"Transcription failed: {e}")
         tray.set_status("error")
@@ -114,20 +104,10 @@ def _on_transcribe_file() -> None:
                 logger.warning(f"LLM refinement failed: {e}")
         elif _cfg.refine and not health["ollama"]:
             logger.info("Skipping refinement - Ollama unavailable")
-        try:
-            injector.inject(text, _cfg.injection_delay)
-        except Exception as e:
-            logger.warning(f"Injection failed: {e}")
-            pyperclip = __import__("pyperclip")
-            pyperclip.copy(text)
-            tray.notify(messages.ERROR_INJECTION_FAILED)
         out_path = exporter.save_transcript(text, path)
-        tray.notify(messages.INFO_TRANSCRIPTION_COMPLETE)
+        pyperclip.copy(text)
+        tray.notify(messages.INFO_TRANSCRIPTION_COMPLETE.format(name=out_path.name))
         tray.set_status("idle")
-    except (requests.ConnectionError, requests.Timeout) as e:
-        logger.error(f"VibeVoice unavailable: {e}")
-        tray.set_status("error")
-        tray.notify(messages.ERROR_VIBEVOICE_UNAVAILABLE)
     except Exception as e:
         logger.exception(f"File transcription failed: {e}")
         tray.set_status("error")
@@ -168,6 +148,31 @@ def _check_health() -> dict[str, bool]:
     return health
 
 
+def _maybe_pull_model(model: str) -> None:
+    import subprocess
+    try:
+        resp = requests.get("http://localhost:11434/api/tags", timeout=5)
+        if resp.status_code != 200:
+            return
+        present = [m["name"] for m in resp.json().get("models", [])]
+        if model in present:
+            return
+    except (requests.ConnectionError, requests.Timeout):
+        return
+
+    def _pull() -> None:
+        tray.notify(f"Pulling {model} - this may take a few minutes...")
+        logger.info(f"Pulling Ollama model: {model}")
+        result = subprocess.run(["ollama", "pull", model], capture_output=True)
+        if result.returncode == 0:
+            tray.notify(f"{model} ready")
+            logger.info(f"Model {model} pulled successfully")
+        else:
+            logger.warning(f"ollama pull failed: {result.stderr.decode()}")
+
+    threading.Thread(target=_pull, daemon=True).start()
+
+
 def _periodic_health_check(interval: int = 60) -> None:
     global _health
     while not _quit_event.is_set():
@@ -175,12 +180,14 @@ def _periodic_health_check(interval: int = 60) -> None:
         logger.debug(f"Periodic health: vibevoice={new_health['vibevoice']}, ollama={new_health['ollama']}")
         with _health_lock:
             _health = new_health
+        if new_health["ollama"] and _cfg.refine:
+            _maybe_pull_model(_cfg.model)
         _quit_event.wait(interval)
 
 
 def main() -> None:
     log_module.init_file_logging()
-    global _cfg, _health
+    global _cfg
     _cfg = cfg_module.load()
 
     if vibevoice_local.is_available():
@@ -190,21 +197,22 @@ def main() -> None:
         stt_engine.set_backend(vibevoice.transcribe)
         logger.info("Using HTTP VibeVoice (vLLM)")
 
-    _health = _check_health()
-
-    if not _health["vibevoice"] and not vibevoice_local.is_available():
-        logger.warning("VibeVoice not available at startup")
-    if not _health["ollama"] and _cfg.refine:
-        logger.warning("Ollama not available - refinement disabled")
-
     monitor_thread = threading.Thread(target=_periodic_health_check, daemon=True)
     monitor_thread.start()
 
-    hotkey_daemon.register_ptt(
-        _cfg.hotkey,
-        on_press=_on_ptt_press,
-        on_release=_on_ptt_release,
-    )
+    if _cfg.hotkey_mode == "double_tap_toggle":
+        hotkey_daemon.register_double_tap_toggle(
+            _cfg.hotkey,
+            on_start=_on_ptt_press,
+            on_stop=_on_ptt_release,
+            window=_cfg.double_tap_window,
+        )
+    else:
+        hotkey_daemon.register_ptt(
+            _cfg.hotkey,
+            on_press=_on_ptt_press,
+            on_release=_on_ptt_release,
+        )
     hotkey_daemon.register(_cfg.cancel_hotkey, _on_cancel)
 
     tray.run(
@@ -217,5 +225,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
-

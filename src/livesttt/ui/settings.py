@@ -1,5 +1,6 @@
 from __future__ import annotations
 import tkinter as tk
+import tkinter.messagebox
 from typing import Callable
 from livesttt.config import Config
 
@@ -62,9 +63,20 @@ def open_settings(cfg: Config, on_save: Callable[[Config], None]) -> None:
 
     row = 0
 
-    tk.Label(win, text="Push-to-talk:").grid(row=row, column=0, padx=8, pady=4, sticky="w")
+    tk.Label(win, text="Mode:").grid(row=row, column=0, padx=8, pady=4, sticky="w")
+    mode_var = tk.StringVar(value=cfg.hotkey_mode)
+    tk.OptionMenu(win, mode_var, "double_tap_toggle", "ptt").grid(row=row, column=1, padx=8, sticky="w")
+    row += 1
+
+    tk.Label(win, text="Hotkey:").grid(row=row, column=0, padx=8, pady=4, sticky="w")
     hotkey_capture = _HotkeyCapture(win, value=cfg.hotkey)
     hotkey_capture.grid(row=row, column=1, padx=8)
+    row += 1
+
+    tk.Label(win, text="Double-tap window (s):").grid(row=row, column=0, padx=8, pady=4, sticky="w")
+    double_tap_window_var = tk.DoubleVar(value=cfg.double_tap_window)
+    tk.Scale(win, from_=0.1, to=1.0, resolution=0.05, variable=double_tap_window_var,
+             orient="horizontal", length=150).grid(row=row, column=1, padx=8, sticky="w")
     row += 1
 
     tk.Label(win, text="Cancel:").grid(row=row, column=0, padx=8, pady=4, sticky="w")
@@ -85,8 +97,8 @@ def open_settings(cfg: Config, on_save: Callable[[Config], None]) -> None:
 
     tk.Label(win, text="VAD Threshold:").grid(row=row, column=0, padx=8, pady=4, sticky="w")
     vad_var = tk.DoubleVar(value=cfg.vad_threshold)
-    vad_scale = tk.Scale(win, from_=0.0, to=0.5, resolution=0.01, variable=vad_var, orient="horizontal", length=150)
-    vad_scale.grid(row=row, column=1, padx=8, sticky="w")
+    tk.Scale(win, from_=0.0, to=0.5, resolution=0.01, variable=vad_var,
+             orient="horizontal", length=150).grid(row=row, column=1, padx=8, sticky="w")
     row += 1
 
     tk.Label(win, text="LLM Timeout (s):").grid(row=row, column=0, padx=8, pady=4, sticky="w")
@@ -100,16 +112,21 @@ def open_settings(cfg: Config, on_save: Callable[[Config], None]) -> None:
     row += 1
 
     def _save() -> None:
-        updated = Config(
-            hotkey=hotkey_capture.get(),
-            cancel_hotkey=cancel_capture.get(),
-            model=model_var.get().strip(),
-            refine=refine_var.get(),
-            vad_threshold=vad_var.get(),
-            stt_timeout=cfg.stt_timeout,
-            llm_timeout=llm_timeout_var.get(),
-            injection_delay=injection_delay_var.get(),
-        )
+        try:
+            updated = Config(
+                hotkey=hotkey_capture.get(),
+                cancel_hotkey=cancel_capture.get(),
+                model=model_var.get().strip(),
+                refine=refine_var.get(),
+                vad_threshold=vad_var.get(),
+                hotkey_mode=mode_var.get(),
+                double_tap_window=double_tap_window_var.get(),
+                llm_timeout=llm_timeout_var.get(),
+                injection_delay=injection_delay_var.get(),
+            )
+        except tk.TclError as e:
+            tk.messagebox.showerror("Invalid input", f"Please correct the highlighted fields.\n\n{e}")
+            return
         on_save(updated)
         win.destroy()
 
