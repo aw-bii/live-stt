@@ -7,7 +7,7 @@ from bertytype import config
 def test_defaults():
     cfg = config.Config()
     assert cfg.hotkey == "alt"
-    assert cfg.model == "gemma4:2b"
+    assert cfg.model == "gemma4:e2b"
     assert cfg.refine is True
     assert cfg.vad_threshold == 0.02
     assert cfg.hotkey_mode == "double_tap_toggle"
@@ -17,7 +17,7 @@ def test_defaults():
 
 def test_save_and_load(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "CONFIG_PATH", tmp_path / "config.json")
-    cfg = config.Config(hotkey="ctrl+r", model="gemma4:2b", refine=False, vad_threshold=0.05)
+    cfg = config.Config(hotkey="ctrl+r", model="gemma4:e2b", refine=False, vad_threshold=0.05)
     config.save(cfg)
     loaded = config.load()
     assert loaded.hotkey == "ctrl+r"
@@ -91,7 +91,7 @@ def test_load_partial_valid_data(tmp_path, monkeypatch):
     (tmp_path / "config.json").write_text('{"hotkey": "ctrl+b"}')
     loaded = config.load()
     assert loaded.hotkey == "ctrl+b"
-    assert loaded.model == "gemma4:2b"
+    assert loaded.model == "gemma4:e2b"
 
 
 def test_hotkey_mode_round_trips(tmp_path, monkeypatch):

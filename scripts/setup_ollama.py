@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""First-run helper: checks Ollama installation and pulls the gemma4:2b model."""
+"""First-run helper: checks Ollama installation and pulls the gemma4:e2b model."""
 import subprocess
 import sys
 
-MODEL = "gemma4:2b"
+MODEL = "gemma4:e2b"
 OLLAMA_URL = "http://localhost:11434/api/tags"
 
 

@@ -28,7 +28,7 @@ Double-tap Alt (or hold for push-to-talk) to record. On release, transcribed tex
 
 ### LLM Refinement (optional)
 
-When Ollama is running locally, transcriptions are passed through Gemma 4 2B for clean-up: filler word removal, punctuation correction, and natural formatting. Toggle it on or off at any time from Settings.
+When Ollama is running locally, transcriptions are passed through Gemma 4 E2B for clean-up: filler word removal, punctuation correction, and natural formatting. Toggle it on or off at any time from Settings.
 
 ---
 
@@ -36,7 +36,7 @@ When Ollama is running locally, transcriptions are passed through Gemma 4 2B for
 
 - **Double-tap toggle and push-to-talk** - double-tap Alt to start/stop recording hands-free, or hold any hotkey for quick PTT mode. Configurable from Settings.
 - **Local STT via VibeVoice** - uses `microsoft/VibeVoice-ASR-HF` via HuggingFace Transformers. Falls back to an HTTP vLLM backend if the local model is unavailable.
-- **Optional LLM refinement** - cleans up transcriptions with Gemma 4 2B via Ollama. Auto-pulls the model in the background if Ollama is running but the model is missing.
+- **Optional LLM refinement** - cleans up transcriptions with Gemma 4 E2B via Ollama. Auto-pulls the model in the background if Ollama is running but the model is missing.
 - **System-wide injection** - injects text into any focused window via clipboard + Ctrl+V simulation. Falls back to clipboard copy with a tray notification if injection fails.
 - **File transcription** - right-click the tray icon to transcribe WAV, MP3, M4A, or FLAC files. Transcript saved as `.txt` alongside the source file and copied to clipboard.
 - **Voice activity detection** - silence trimming via energy-based VAD before transcription. Threshold is configurable from Settings.
@@ -81,7 +81,7 @@ Install [Ollama](https://ollama.com), then run the setup helper:
 python scripts/setup_ollama.py
 ```
 
-This verifies Ollama is running and pulls `gemma4:2b` (~1.5 GB, one-time download). Once done, refinement enables automatically on next launch.
+This verifies Ollama is running and pulls `gemma4:e2b` (~1.5 GB, one-time download). Once done, refinement enables automatically on next launch.
 
 ### Build the exe
 
@@ -100,7 +100,7 @@ pyinstaller bertytype.spec
 | --- | --- | --- | --- |
 | **VibeVoice ASR** (default) | HuggingFace Transformers (local) | ~1 GB | `microsoft/VibeVoice-ASR-HF`; downloaded on first use |
 | VibeVoice ASR | vLLM HTTP | - | Fallback if local model unavailable; requires a running vLLM server at `localhost:8000` |
-| **Gemma 4 2B** (refinement) | Ollama | ~1.5 GB | Optional; `gemma4:2b`; auto-pulled if Ollama is running |
+| **Gemma 4 E2B** (refinement) | Ollama | ~1.5 GB | Optional; `gemma4:e2b`; auto-pulled if Ollama is running |
 
 ---
 
@@ -161,7 +161,7 @@ pyinstaller bertytype.spec
 | --- | --- |
 | App | Python 3.10+, pystray, Pillow |
 | STT | [VibeVoice-ASR-HF](https://huggingface.co/microsoft/VibeVoice-ASR-HF) via HuggingFace Transformers |
-| LLM refinement | [Gemma 4 2B](https://ollama.com/library/gemma4) via [Ollama](https://ollama.com) HTTP API |
+| LLM refinement | [Gemma 4 E2B](https://ollama.com/library/gemma4) via [Ollama](https://ollama.com) HTTP API |
 | Audio capture | sounddevice + pydub |
 | Voice activity detection | Energy-based VAD (scipy) |
 | Text injection | pyperclip + pyautogui (clipboard + Ctrl+V simulation) |

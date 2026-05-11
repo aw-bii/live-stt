@@ -15,7 +15,7 @@ _VALID_HOTKEY_MODES = {"ptt", "double_tap_toggle"}
 class Config:
     hotkey: str = "alt"
     cancel_hotkey: str = "escape"
-    model: str = "gemma4:2b"
+    model: str = "gemma4:e2b"
     refine: bool = True
     vad_threshold: float = 0.02
     hotkey_mode: str = "double_tap_toggle"
