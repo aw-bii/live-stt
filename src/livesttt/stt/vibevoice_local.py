@@ -1,12 +1,12 @@
 import io
 import wave
-from typing import Optional
+from typing import Any, Optional
 
 import numpy as np
 
 _MODEL_ID = "microsoft/VibeVoice-ASR-HF"
-_processor: Optional["AutoProcessor"] = None
-_model: Optional["VibeVoiceAsrForConditionalGeneration"] = None
+_processor: Optional[Any] = None
+_model: Optional[Any] = None
 
 
 def _get_model():
@@ -41,7 +41,7 @@ def transcribe(audio_bytes: bytes) -> str:
 
 def is_available() -> bool:
     try:
-        _get_model()
+        import transformers  # noqa: F401
         return True
-    except Exception:
+    except ImportError:
         return False

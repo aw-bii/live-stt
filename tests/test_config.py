@@ -6,15 +6,18 @@ from livesttt import config
 
 def test_defaults():
     cfg = config.Config()
-    assert cfg.hotkey == "ctrl+shift+space"
-    assert cfg.model == "gemma4"
+    assert cfg.hotkey == "alt"
+    assert cfg.model == "gemma4:2b"
     assert cfg.refine is True
     assert cfg.vad_threshold == 0.02
+    assert cfg.hotkey_mode == "double_tap_toggle"
+    assert cfg.double_tap_window == 0.3
+    assert not hasattr(cfg, "stt_timeout")
 
 
 def test_save_and_load(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "CONFIG_PATH", tmp_path / "config.json")
-    cfg = config.Config(hotkey="ctrl+r", model="gemma4", refine=False, vad_threshold=0.05)
+    cfg = config.Config(hotkey="ctrl+r", model="gemma4:2b", refine=False, vad_threshold=0.05)
     config.save(cfg)
     loaded = config.load()
     assert loaded.hotkey == "ctrl+r"
@@ -52,7 +55,7 @@ def test_load_invalid_hotkey_defaults(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "CONFIG_PATH", tmp_path / "config.json")
     (tmp_path / "config.json").write_text('{"hotkey": ""}')
     loaded = config.load()
-    assert loaded.hotkey == "ctrl+shift+space"
+    assert loaded.hotkey == "alt"
 
 
 def test_load_invalid_vad_threshold_defaults(tmp_path, monkeypatch):
@@ -88,4 +91,34 @@ def test_load_partial_valid_data(tmp_path, monkeypatch):
     (tmp_path / "config.json").write_text('{"hotkey": "ctrl+b"}')
     loaded = config.load()
     assert loaded.hotkey == "ctrl+b"
-    assert loaded.model == "gemma4"
+    assert loaded.model == "gemma4:2b"
+
+
+def test_hotkey_mode_round_trips(tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "CONFIG_PATH", tmp_path / "config.json")
+    cfg = config.Config(hotkey_mode="ptt")
+    config.save(cfg)
+    loaded = config.load()
+    assert loaded.hotkey_mode == "ptt"
+
+
+def test_invalid_hotkey_mode_defaults(tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "CONFIG_PATH", tmp_path / "config.json")
+    (tmp_path / "config.json").write_text('{"hotkey_mode": "bogus"}')
+    loaded = config.load()
+    assert loaded.hotkey_mode == "double_tap_toggle"
+
+
+def test_double_tap_window_round_trips(tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "CONFIG_PATH", tmp_path / "config.json")
+    cfg = config.Config(double_tap_window=0.5)
+    config.save(cfg)
+    loaded = config.load()
+    assert loaded.double_tap_window == 0.5
+
+
+def test_old_config_with_stt_timeout_loads_without_error(tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "CONFIG_PATH", tmp_path / "config.json")
+    (tmp_path / "config.json").write_text('{"stt_timeout": 60, "hotkey": "alt"}')
+    loaded = config.load()
+    assert loaded.hotkey == "alt"

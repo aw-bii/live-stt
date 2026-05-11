@@ -18,16 +18,23 @@ dependencies = [
     "pyperclip>=1.8",
     "pyautogui>=0.9",
     "requests>=2.31",
-    "transformers>=4.50",
-    "torch>=2.0",
     "loguru>=0.7",
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=7", "pytest-mock>=3"]
+local-stt = [
+    "transformers>=4.50",
+    "torch>=2.0",
+]
+dev = ["pytest>=7", "pytest-mock>=3", "mypy>=1.0"]
 
 [project.gui-scripts]
 livesttt = "livesttt.__main__:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/livesttt"]
+
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+files = ["src/livesttt"]

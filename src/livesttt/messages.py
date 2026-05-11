@@ -5,6 +5,6 @@ ERROR_TRANSCRIPTION_FAILED = "Transcription failed - check audio input"
 ERROR_AUDIO_CAPTURE_FAILED = "Audio capture failed - check microphone"
 ERROR_FILE_READ_FAILED = "Could not read audio file"
 
-INFO_TRANSCRIPTION_COMPLETE = "Transcription complete"
+INFO_TRANSCRIPTION_COMPLETE = "Transcript saved: {name}"
 INFO_SKIPPED_REFINEMENT = "Refinement skipped - Ollama unavailable"
 INFO_COPIED_TO_CLIPBOARD = "Copied to clipboard"

@@ -8,27 +8,26 @@ CONFIG_PATH = Path.home() / ".livesttt" / "config.json"
 
 logger = log_module.logger
 
+_VALID_HOTKEY_MODES = {"ptt", "double_tap_toggle"}
+
 
 @dataclass
 class Config:
-    hotkey: str = "ctrl+shift+space"
+    hotkey: str = "alt"
     cancel_hotkey: str = "escape"
-    model: str = "gemma4"
+    model: str = "gemma4:2b"
     refine: bool = True
     vad_threshold: float = 0.02
-    stt_timeout: int = 60
+    hotkey_mode: str = "double_tap_toggle"
+    double_tap_window: float = 0.3
     llm_timeout: int = 30
     injection_delay: float = 0.05
 
 
 def _validate_value(key: str, value, default):
-    if key in ("hotkey", "cancel_hotkey"):
+    if key in ("hotkey", "cancel_hotkey", "model"):
         if not isinstance(value, str) or not value.strip():
             logger.warning(f"Invalid {key}: {value!r}, using default {default!r}")
-            return default
-    elif key == "model":
-        if not isinstance(value, str) or not value.strip():
-            logger.warning(f"Invalid model: {value!r}, using default {default!r}")
             return default
     elif key == "refine":
         if not isinstance(value, bool):
@@ -38,7 +37,15 @@ def _validate_value(key: str, value, default):
         if not isinstance(value, (int, float)) or not (0.0 <= value <= 1.0):
             logger.warning(f"Invalid vad_threshold: {value!r}, using default {default!r}")
             return default
-    elif key in ("stt_timeout", "llm_timeout"):
+    elif key == "hotkey_mode":
+        if value not in _VALID_HOTKEY_MODES:
+            logger.warning(f"Invalid hotkey_mode: {value!r}, using default {default!r}")
+            return default
+    elif key == "double_tap_window":
+        if not isinstance(value, (int, float)) or not (0.05 <= value <= 2.0):
+            logger.warning(f"Invalid double_tap_window: {value!r}, using default {default!r}")
+            return default
+    elif key == "llm_timeout":
         if not isinstance(value, int) or value <= 0:
             logger.warning(f"Invalid {key}: {value!r}, using default {default!r}")
             return default
@@ -52,11 +59,9 @@ def _validate_value(key: str, value, default):
 def _validate(data: dict) -> Config:
     defaults = Config()
     defaults_dict = asdict(defaults)
-
     validated = {}
     for key, default in defaults_dict.items():
-        validated[key] = _validate_value(key, data.get(key), default)
-
+        validated[key] = _validate_value(key, data.get(key, default), default)
     return Config(**validated)
 
 
@@ -64,6 +69,9 @@ def load() -> Config:
     if CONFIG_PATH.exists():
         try:
             data = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
+            # Silently drop unknown/removed keys (e.g. stt_timeout from old configs)
+            known_keys = set(asdict(Config()).keys())
+            data = {k: v for k, v in data.items() if k in known_keys}
             return _validate(data)
         except (json.JSONDecodeError, TypeError, KeyError) as e:
             logger.warning(f"Config load failed: {e}, using defaults")
