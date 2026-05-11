@@ -48,6 +48,4 @@
 
 ## Remaining
 
-- [ ] **PyInstaller spec hardcodes `.venv` path for sounddevice data** - `livesttt.spec:11`: use `collect_data_files("sounddevice")` from `PyInstaller.utils.hooks`.
-- [ ] **Add `mypy` or `pyright` to CI** - Cheap type-check step would catch regressions.
-- [ ] **No orchestration test for `_capture_and_process`** - Core pipeline untested; add test mocking capture/vad/stt/llm/injector for happy path and cancel.
+None - all known issues resolved.
