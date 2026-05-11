@@ -19,7 +19,7 @@ def build_hotkey_string(state: int, keysym: str) -> str | None:
         parts.append("ctrl")
     if state & 0x1:
         parts.append("shift")
-    if state & 0x8:
+    if state & 0x20000:
         parts.append("alt")
     parts.append(keysym.lower())
     return "+".join(parts)

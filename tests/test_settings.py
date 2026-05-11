@@ -26,7 +26,12 @@ def test_ctrl_shift_modifier():
 
 
 def test_alt_modifier():
-    assert build_hotkey_string(0x8, "f9") == "alt+f9"
+    assert build_hotkey_string(0x20000, "f9") == "alt+f9"
+
+
+def test_mod1_bit_not_treated_as_alt():
+    # 0x8 is NumLock/Mod1 on Windows, not Alt - should produce no modifier prefix
+    assert build_hotkey_string(0x8, "f9") == "f9"
 
 
 def test_keysym_is_lowercased():
