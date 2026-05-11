@@ -1,0 +1,92 @@
+import queue
+import threading
+from unittest.mock import patch, MagicMock, call
+from pathlib import Path
+
+
+def _drain(q: queue.Queue) -> list:
+    items = []
+    try:
+        while True:
+            items.append(q.get_nowait())
+    except queue.Empty:
+        pass
+    return items
+
+
+def test_install_ollama_success(tmp_path):
+    cancel = threading.Event()
+    q = queue.Queue()
+
+    fake_exe = tmp_path / "OllamaSetup.exe"
+
+    mock_run = MagicMock()
+    mock_run.returncode = 0
+
+    with patch("requests.get", return_value=MagicMock(status_code=200)), \
+    patch("bertytype_setup.installers._download_file", return_value=fake_exe), \
+    patch("subprocess.run", return_value=mock_run):
+        from bertytype_setup import installers
+        import importlib
+        importlib.reload(installers)
+        result = installers.install_ollama(q, cancel)
+
+    assert result is True
+    events = [item[0] for item in _drain(q)]
+    assert "log" in events
+
+
+def test_install_ollama_download_cancelled(tmp_path):
+    cancel = threading.Event()
+    cancel.set()
+    q = queue.Queue()
+
+    with patch("bertytype_setup.installers._download_file", return_value=None):
+        from bertytype_setup import installers
+        import importlib
+        importlib.reload(installers)
+        result = installers.install_ollama(q, cancel)
+
+    assert result is False
+
+
+def test_ensure_ollama_service_already_running():
+    cancel = threading.Event()
+    q = queue.Queue()
+
+    mock_resp = MagicMock()
+    mock_resp.status_code = 200
+
+    with patch("requests.get", return_value=mock_resp):
+        from bertytype_setup import installers
+        import importlib
+        importlib.reload(installers)
+        result = installers._ensure_ollama_service(q, cancel)
+
+    assert result is True
+
+
+def test_ensure_ollama_service_starts_and_waits():
+    cancel = threading.Event()
+    q = queue.Queue()
+
+    import requests as req_module
+    call_count = [0]
+
+    def mock_get(*a, **kw):
+        call_count[0] += 1
+        if call_count[0] < 3:
+            raise req_module.ConnectionError
+        m = MagicMock()
+        m.status_code = 200
+        return m
+
+    with patch("requests.get", side_effect=mock_get), \
+         patch("subprocess.Popen"), \
+         patch("time.sleep"):
+        from bertytype_setup import installers
+        import importlib
+        importlib.reload(installers)
+        result = installers._ensure_ollama_service(q, cancel)
+
+    assert result is True
