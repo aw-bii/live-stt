@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 import threading
 import tkinter.filedialog
 from pathlib import Path
@@ -19,6 +19,7 @@ logger = log_module.logger
 _cfg = cfg_module.Config()
 _stop_event = threading.Event()
 _cancel_event = threading.Event()
+_quit_event = threading.Event()
 _health = {"vibevoice": False, "ollama": False}
 _health_lock = threading.Lock()
 
@@ -165,9 +166,6 @@ def _check_health() -> dict[str, bool]:
         except (requests.ConnectionError, requests.Timeout):
             health["vibevoice"] = False
     return health
-
-
-_quit_event = threading.Event()
 
 
 def _periodic_health_check(interval: int = 60) -> None:
