@@ -5,13 +5,29 @@ from PIL import Image, ImageDraw
 
 _icon: pystray.Icon | None = None
 _status = "idle"
-_STATUS_COLORS = {"idle": "green", "recording": "red", "processing": "orange"}
+_STATUS_COLORS = {
+    "idle": "#4CAF50",
+    "recording": "#F44336",
+    "processing": "#FF9800",
+    "error": "#9E9E9E",
+}
+
+_BAR_HEIGHTS = [16, 32, 48, 32, 16]
+_BAR_WIDTH = 8
+_BAR_GAP = 4
+_CANVAS = 64
 
 
 def _make_icon(color: str) -> Image.Image:
-    img = Image.new("RGB", (64, 64), color="black")
+    img = Image.new("RGBA", (_CANVAS, _CANVAS), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
-    draw.ellipse([8, 8, 56, 56], fill=color)
+    total_width = len(_BAR_HEIGHTS) * _BAR_WIDTH + (len(_BAR_HEIGHTS) - 1) * _BAR_GAP
+    x_start = (_CANVAS - total_width) // 2
+    for i, bar_h in enumerate(_BAR_HEIGHTS):
+        x = x_start + i * (_BAR_WIDTH + _BAR_GAP)
+        y_top = (_CANVAS - bar_h) // 2
+        y_bot = y_top + bar_h
+        draw.rounded_rectangle([x, y_top, x + _BAR_WIDTH, y_bot], radius=2, fill=color)
     return img
 
 
@@ -19,7 +35,7 @@ def set_status(status: str) -> None:
     global _status
     _status = status
     if _icon:
-        _icon.icon = _make_icon(_STATUS_COLORS.get(status, "gray"))
+        _icon.icon = _make_icon(_STATUS_COLORS.get(status, _STATUS_COLORS["error"]))
 
 
 def run(
@@ -29,13 +45,12 @@ def run(
     on_quit: Callable[[], None],
 ) -> None:
     global _icon
-
     menu = pystray.Menu(
         pystray.MenuItem("Transcribe file...", lambda icon, item: on_transcribe_file()),
         pystray.MenuItem("Settings", lambda icon, item: on_open_settings()),
         pystray.MenuItem("Quit", lambda icon, item: on_quit()),
     )
-    _icon = pystray.Icon("livesttt", _make_icon("green"), "live-stt", menu)
+    _icon = pystray.Icon("livesttt", _make_icon(_STATUS_COLORS["idle"]), "live-stt", menu)
     _icon.run()
 
 
