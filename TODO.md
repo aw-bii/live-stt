@@ -20,17 +20,17 @@
 
 ## Bugs - Critical
 
-- [ ] **PTT hotkey strips modifiers - intercepts plain Space globally** - `__main__.py:198` splits on `"+"` and passes only the last token (e.g. `"space"`) to `register_ptt` with `suppress=True`. This intercepts every spacebar keypress system-wide. Fix: use `keyboard.add_hotkey(_cfg.hotkey, ...)` which respects the full combo string.
+- [x] **PTT hotkey strips modifiers - intercepts plain Space globally** - Fixed in 16162ab: `register_ptt` now uses `keyboard.add_hotkey` with the full combo string and `trigger_on_release`.
 
-- [ ] **`is_available()` loads the full model instead of checking** - `vibevoice_local.py:42-47` calls `_get_model()` which triggers a multi-GB Transformers download on first call. It is invoked 3x at startup and every 60 s by the health monitor. Decouple availability check from model loading.
+- [x] **`is_available()` loads the full model instead of checking** - Fixed in 0b5124b: now checks `import transformers` only; model loading deferred to first `transcribe()` call.
 
-- [ ] **Health monitor thread is unstoppable** - `__main__.py:173` creates a fresh `threading.Event()` each loop iteration, so the quit signal from `_on_quit` never reaches it. Replace with a shared module-level `Event` that `_on_quit` calls `.set()` on.
+- [x] **Health monitor thread is unstoppable** - Fixed in 1826f7c: module-level `_quit_event` shared between `_periodic_health_check` and `_on_quit`.
 
-- [ ] **Race condition on `_health` dict** - `__main__.py:54,67,171`: the monitor thread reassigns the module global while worker threads read it. Protect with a `threading.Lock` or copy with `_health.copy()` at the top of each worker.
+- [x] **Race condition on `_health` dict** - Fixed in 4592139: `_health_lock` protects all reads and writes; worker threads use `_health.copy()` snapshot.
 
-- [ ] **`refine_async` ThreadPoolExecutor is never shut down** - `llm/client.py:7`: a single-worker executor is never shut down on quit, which can hang the process on Windows. Also, queued refinements can inject stale text after a new recording starts. Call `shutdown(cancel_futures=True)` in `_on_quit`.
+- [x] **`refine_async` ThreadPoolExecutor is never shut down** - Fixed in cb08f30: `llm_client.shutdown(cancel_futures=True)` called in `_on_quit`.
 
-- [ ] **Untracked `launch.py` shadows the real entry point** - A stray `launch.py` exists outside git with broken behavior (bare `except`, no settings/quit/tray wiring). Delete it or commit it.
+- [x] **Untracked `launch.py` shadows the real entry point** - Fixed: file deleted.
 
 ## Bugs - Important
 
