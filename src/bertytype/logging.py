@@ -6,11 +6,12 @@ LOG_PATH = Path.home() / ".bertytype" / "logs"
 LOG_FILE = "bertytype.log"
 
 logger.remove()
-logger.add(
-    sys.stderr,
-    format="<level>{level}</level> <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>",
-    level="INFO",
-)
+if sys.stderr is not None:
+    logger.add(
+        sys.stderr,
+        format="<level>{level}</level> <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>",
+        level="INFO",
+    )
 
 
 def init_file_logging() -> None:
