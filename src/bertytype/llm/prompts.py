@@ -10,7 +10,11 @@ _TEMPLATES: dict[str, str] = {
 }
 
 
+def _sanitize(text: str) -> str:
+    return "".join(c for c in text if c.isprintable() or c in "\n\t")
+
+
 def get_prompt(mode: str, text: str) -> str:
     if mode not in _TEMPLATES:
         raise ValueError(f"Unknown mode: {mode!r}. Choose from {list(_TEMPLATES)}")
-    return _TEMPLATES[mode].format(text=text)
+    return _TEMPLATES[mode].format(text=_sanitize(text))

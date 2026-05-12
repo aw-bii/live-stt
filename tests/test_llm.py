@@ -50,3 +50,34 @@ def test_refine_strips_whitespace():
         result = client.refine("text", "rewrite", "gemma4")
 
     assert result == "result"
+
+
+def test_sanitize_removes_control_characters():
+    dirty = "hello\x00\x1b\x07world"
+    result = prompts._sanitize(dirty)
+    assert result == "helloworld"
+
+
+def test_sanitize_removes_null_bytes():
+    result = prompts._sanitize("test\x00string")
+    assert result == "teststring"
+
+
+def test_sanitize_preserves_normal_text():
+    text = "Hello, world! 123 😀"
+    result = prompts._sanitize(text)
+    assert result == text
+
+
+def test_sanitize_preserves_newlines_and_tabs():
+    text = "line1\nline2\twith tab"
+    result = prompts._sanitize(text)
+    assert result == text
+
+
+def test_get_prompt_sanitizes_input():
+    dirty = "safe\x00\x07text"
+    result = prompts.get_prompt("clean_up", dirty)
+    assert "safe\x00" not in result
+    assert "safe\x07" not in result
+    assert "safetext" in result
