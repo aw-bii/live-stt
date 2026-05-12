@@ -203,6 +203,7 @@ class Wizard:
         self._root.title(TITLE)
         self._root.geometry(f"{WIN_W}x{WIN_H}")
         self._root.resizable(False, False)
+        self._root.protocol("WM_DELETE_WINDOW", self._root.quit)
         self._queue: queue.Queue = queue.Queue()
         self._cancel = threading.Event()
         self._current_frame: tk.Frame | None = None

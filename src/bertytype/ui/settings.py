@@ -273,6 +273,12 @@ def open_settings(cfg: Config, on_save: Callable[[Config], None]) -> None:
         except ValueError as exc:
             error_lbl.configure(text=f"Invalid value: {exc}")
             return
+        if not (1 <= llm_to <= 600):
+            error_lbl.configure(text="LLM timeout must be between 1 and 600 seconds")
+            return
+        if not (0.0 <= inj_del <= 10.0):
+            error_lbl.configure(text="Injection delay must be between 0.0 and 10.0 seconds")
+            return
         new_cfg = Config(
             hotkey=hotkey_cap.get(),
             cancel_hotkey=cancel_cap.get(),

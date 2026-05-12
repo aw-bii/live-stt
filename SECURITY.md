@@ -1,7 +1,7 @@
 # BertyType Security Disclosure
 
 **Project:** BertyType  
-**Date:** 2025-05-12  
+**Date:** 2026-05-12  
 **Version:** 1.0
 
 ---
