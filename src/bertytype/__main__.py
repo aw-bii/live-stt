@@ -187,14 +187,30 @@ def _periodic_health_check(interval: int = 60) -> None:
 
 
 def _run_setup_if_needed() -> bool:
-    from bertytype_setup.checks import check_all
-    from bertytype_setup.wizard import Wizard
-    if all(check_all().values()):
+    try:
+        from bertytype_setup.checks import check_all
+        from bertytype_setup.wizard import Wizard
+    except Exception:
+        logger.exception("Failed to import bertytype_setup")
+        return True
+    try:
+        checks = check_all()
+    except Exception:
+        logger.exception("check_all() failed")
+        checks = {}
+    logger.info(f"Setup checks: {checks}")
+    if all(checks.values()) and checks:
         return True
     root = tk.Tk()
+    root.lift()
+    root.attributes("-topmost", True)
+    root.after(200, lambda: root.attributes("-topmost", False))
     wizard = Wizard(root)
     root.mainloop()
-    root.destroy()
+    try:
+        root.destroy()
+    except Exception:
+        pass
     return wizard.launch_requested
 
 
