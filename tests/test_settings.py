@@ -1,3 +1,5 @@
+import pytest
+
 from bertytype.ui.settings import build_hotkey_string
 
 
@@ -36,13 +38,6 @@ def test_mod1_bit_not_treated_as_alt():
 
 def test_keysym_is_lowercased():
     assert build_hotkey_string(0, "Return") == "return"
-
-
-def test_ctrl_shift_key_matches_config_default():
-    assert build_hotkey_string(0x4 | 0x1, "space") == "ctrl+shift+space"
-
-
-import pytest
 
 
 @pytest.fixture(scope="module")

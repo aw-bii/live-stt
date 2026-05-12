@@ -129,7 +129,6 @@ def open_settings(cfg: Config, on_save: Callable[[Config], None]) -> None:
     def _sep() -> None:
         sep = tk.Frame(content, height=1, bg=_BORDER)
         sep.pack(fill="x")
-        sep.pack_propagate(False)
 
     def _row(label: str, hint: str) -> ctk.CTkFrame:
         row = ctk.CTkFrame(content, fg_color="transparent", corner_radius=0)
@@ -142,7 +141,6 @@ def open_settings(cfg: Config, on_save: Callable[[Config], None]) -> None:
         rgt.pack(side="right", padx=17, pady=9)
         return rgt
 
-    # Row 1 - Recording Mode
     mode_var = tk.StringVar(value=cfg.hotkey_mode)
     ctk.CTkOptionMenu(
         _row("Recording Mode", "How to start and stop recording"),
@@ -154,14 +152,12 @@ def open_settings(cfg: Config, on_save: Callable[[Config], None]) -> None:
     ).pack()
     _sep()
 
-    # Row 2 - Hotkey
     hotkey_cap = _HotkeyCapture(
         _row("Hotkey", "Key to hold (PTT) or tap (toggle)"), cfg.hotkey
     )
     hotkey_cap.pack()
     _sep()
 
-    # Row 3 - Double-tap Window
     dbl_var = tk.DoubleVar(value=cfg.double_tap_window)
     dbl_ctrl = ctk.CTkFrame(
         _row("Double-tap Window", "Max gap between taps (0.05 - 2.0 s)"),
@@ -186,14 +182,12 @@ def open_settings(cfg: Config, on_save: Callable[[Config], None]) -> None:
     ).pack(side="left")
     _sep()
 
-    # Row 4 - Cancel Hotkey
     cancel_cap = _HotkeyCapture(
         _row("Cancel Hotkey", "Abort an in-progress recording"), cfg.cancel_hotkey
     )
     cancel_cap.pack()
     _sep()
 
-    # Row 5 - LLM Model
     model_var = tk.StringVar(value=cfg.model)
     ctk.CTkEntry(
         _row("LLM Model", "Ollama model name for refinement"),
@@ -202,7 +196,6 @@ def open_settings(cfg: Config, on_save: Callable[[Config], None]) -> None:
     ).pack()
     _sep()
 
-    # Row 6 - Refine with LLM
     refine_var = tk.BooleanVar(value=cfg.refine)
     ctk.CTkSwitch(
         _row("Refine with LLM", "Pass STT output through Gemma 4"),
@@ -212,7 +205,6 @@ def open_settings(cfg: Config, on_save: Callable[[Config], None]) -> None:
     ).pack()
     _sep()
 
-    # Row 7 - VAD Threshold
     vad_var = tk.DoubleVar(value=cfg.vad_threshold)
     vad_ctrl = ctk.CTkFrame(
         _row("VAD Threshold", "Voice activity sensitivity (0.0 - 0.5)"),
@@ -237,7 +229,6 @@ def open_settings(cfg: Config, on_save: Callable[[Config], None]) -> None:
     ).pack(side="left")
     _sep()
 
-    # Row 8 - LLM Timeout
     llm_to_var = tk.StringVar(value=str(cfg.llm_timeout))
     to_ctrl = ctk.CTkFrame(
         _row("LLM Timeout", "Seconds before giving up on LLM"),
@@ -253,8 +244,7 @@ def open_settings(cfg: Config, on_save: Callable[[Config], None]) -> None:
     )
     _sep()
 
-    # Row 9 - Injection Delay  (no separator after last row)
-    inj_var = tk.StringVar(value=str(cfg.injection_delay))
+    inj_var = tk.StringVar(value=str(cfg.injection_delay))  # no separator after last row
     inj_ctrl = ctk.CTkFrame(
         _row("Injection Delay", "Pause before typing into active window"),
         fg_color="transparent",
@@ -268,11 +258,9 @@ def open_settings(cfg: Config, on_save: Callable[[Config], None]) -> None:
         side="left", padx=(5, 0)
     )
 
-    # Error label (hidden until a save attempt fails)
     error_lbl = ctk.CTkLabel(win, text="", font=_FONT_SM, text_color=_RED, anchor="e")
     error_lbl.pack(fill="x", padx=17, pady=(6, 0))
 
-    # Footer
     tk.Frame(win, height=1, bg=_BORDER).pack(fill="x")
     footer = ctk.CTkFrame(win, fg_color=_BG, corner_radius=0)
     footer.pack(fill="x", padx=17, pady=11)
@@ -285,17 +273,22 @@ def open_settings(cfg: Config, on_save: Callable[[Config], None]) -> None:
         except ValueError as exc:
             error_lbl.configure(text=f"Invalid value: {exc}")
             return
-        on_save(Config(
+        new_cfg = Config(
             hotkey=hotkey_cap.get(),
             cancel_hotkey=cancel_cap.get(),
             model=model_var.get().strip(),
-            refine=bool(refine_var.get()),
+            refine=refine_var.get(),
             vad_threshold=round(vad_var.get(), 3),
             hotkey_mode=mode_var.get(),
             double_tap_window=round(dbl_var.get(), 3),
             llm_timeout=llm_to,
             injection_delay=inj_del,
-        ))
+        )
+        try:
+            on_save(new_cfg)
+        except Exception as exc:
+            error_lbl.configure(text=f"Save failed: {exc}")
+            return
         win.destroy()
 
     ctk.CTkButton(
