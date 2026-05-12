@@ -54,6 +54,33 @@ def test_start_recording_empty_when_no_frames():
     assert isinstance(result, bytes)
 
 
+def test_start_recording_cancelled_returns_empty():
+    sample = np.zeros((160, 1), dtype=np.int16)
+
+    class FakeStream:
+        def __init__(self, **kwargs):
+            self._callback = kwargs["callback"]
+
+        def __enter__(self):
+            self._callback(sample, 160, None, None)
+            return self
+
+        def __exit__(self, *args):
+            pass
+
+    stop = threading.Event()
+    cancel = threading.Event()
+    cancel.set()
+
+    with patch("sounddevice.InputStream", FakeStream):
+        result = capture.start_recording(stop, cancel)
+
+    assert result == b""
+
+
+
+
+
 def _make_wav(path: Path, num_samples: int = 160, amplitude: int = 0) -> Path:
     with wave.open(str(path), "w") as f:
         f.setnchannels(1)

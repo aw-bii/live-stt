@@ -47,7 +47,7 @@ def _capture_and_process() -> None:
     with _health_lock:
         health = _health.copy()
     try:
-        audio = capture.start_recording(_stop_event)
+        audio = capture.start_recording(_stop_event, _cancel_event)
         if _cancel_event.is_set():
             tray.set_status("idle")
             return
