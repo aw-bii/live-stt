@@ -104,6 +104,32 @@ def test_read_file_normalises_to_16khz_mono(tmp_path):
     assert arr.ndim == 1
 
 
+def test_read_file_rejects_file_too_large(tmp_path):
+    big_wav = tmp_path / "big.wav"
+    with wave.open(str(big_wav), "w") as f:
+        f.setnchannels(1)
+        f.setsampwidth(2)
+        f.setframerate(16000)
+        f.writeframes(b"\x00" * (501 * 1024 * 1024))
+
+    with pytest.raises(ValueError, match="too large"):
+        reader.read_file(big_wav)
+
+
+def test_read_file_rejects_audio_too_long(tmp_path):
+    long_wav = tmp_path / "long.wav"
+    with wave.open(str(long_wav), "w") as f:
+        f.setnchannels(1)
+        f.setsampwidth(2)
+        f.setframerate(16000)
+        num_samples = int(16000 * 601)
+        silence = struct.pack(f"<{num_samples}h", *([0] * num_samples))
+        f.writeframes(silence)
+
+    with pytest.raises(ValueError, match="too long"):
+        reader.read_file(long_wav)
+
+
 def test_trim_silence_removes_silent_audio():
     silence = np.zeros(16000, dtype=np.int16).tobytes()
     result = vad.trim_silence(silence, threshold=0.02)

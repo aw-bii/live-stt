@@ -8,6 +8,16 @@ SAMPLE_RATE = 16000
 
 
 def read_file(path: Path) -> bytes:
+    MAX_SIZE_BYTES = 500 * 1024 * 1024  # 500 MB
+    MAX_DURATION_MS = 600_000  # 10 minutes
+
+    size = path.stat().st_size
+    if size > MAX_SIZE_BYTES:
+        raise ValueError(f"Audio file too large ({size / 1024 / 1024:.0f} MB). Maximum is 500 MB.")
+
     audio = AudioSegment.from_file(str(path))
+    if len(audio) > MAX_DURATION_MS:
+        raise ValueError(f"Audio file too long ({len(audio) / 1000:.0f}s). Maximum is 600s.")
+
     audio = audio.set_frame_rate(SAMPLE_RATE).set_channels(1).set_sample_width(2)
     return audio.raw_data
