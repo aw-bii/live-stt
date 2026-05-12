@@ -122,3 +122,42 @@ def test_old_config_with_stt_timeout_loads_without_error(tmp_path, monkeypatch):
     (tmp_path / "config.json").write_text('{"stt_timeout": 60, "hotkey": "alt"}')
     loaded = config.load()
     assert loaded.hotkey == "alt"
+
+
+@pytest.mark.parametrize("model_name", [
+    "../etc/passwd",
+    "model;rm -rf",
+    "model$shell",
+    "model|grep",
+    "model>out",
+    "model<in",
+    "model`cmd`",
+    "model&&cmd",
+    "model||cmd",
+])
+def test_model_name_rejects_dangerous_patterns(tmp_path, monkeypatch, model_name):
+    monkeypatch.setattr(config, "CONFIG_PATH", tmp_path / "config.json")
+    (tmp_path / "config.json").write_text(f'{{"model": "{model_name}"}}')
+    loaded = config.load()
+    assert loaded.model == "gemma4:e2b"
+
+
+def test_model_name_accepts_valid_names(tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "CONFIG_PATH", tmp_path / "config.json")
+    (tmp_path / "config.json").write_text('{"model": "llama3:8b"}')
+    loaded = config.load()
+    assert loaded.model == "llama3:8b"
+
+
+def test_model_name_accepts_ollama_default(tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "CONFIG_PATH", tmp_path / "config.json")
+    (tmp_path / "config.json").write_text('{"model": "gemma4:e2b"}')
+    loaded = config.load()
+    assert loaded.model == "gemma4:e2b"
+
+
+def test_model_name_accepts_custom_model(tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "CONFIG_PATH", tmp_path / "config.json")
+    (tmp_path / "config.json").write_text('{"model": "my-custom-model:latest"}')
+    loaded = config.load()
+    assert loaded.model == "my-custom-model:latest"
