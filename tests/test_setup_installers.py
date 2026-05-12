@@ -15,6 +15,121 @@ def _drain(q: queue.Queue) -> list:
     return items
 
 
+def test_hf_download_file_passes_hash_to_hub():
+    from bertytype_setup import installers
+    import importlib
+    importlib.reload(installers)
+    with patch("huggingface_hub.hf_hub_download") as mock_hub:
+        installers._hf_download_file("test/repo", "model.bin", expected_hash="abc123")
+        mock_hub.assert_called_once_with(
+            repo_id="test/repo",
+            filename="model.bin",
+            hash="abc123",
+        )
+
+
+def test_hf_download_file_no_hash():
+    from bertytype_setup import installers
+    import importlib
+    importlib.reload(installers)
+    with patch("huggingface_hub.hf_hub_download") as mock_hub:
+        installers._hf_download_file("test/repo", "model.bin", expected_hash=None)
+        mock_hub.assert_called_once_with(
+            repo_id="test/repo",
+            filename="model.bin",
+            hash=None,
+        )
+
+
+def test_download_file_hash_verification_success(tmp_path):
+    cancel = threading.Event()
+    q = queue.Queue()
+
+    expected_sha256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+
+    content = b""
+
+    def mock_get(*a, **kw):
+        resp = MagicMock()
+        resp.status_code = 200
+        resp.headers = {"content-length": "0"}
+        resp.raise_for_status = MagicMock()
+        resp.iter_content = lambda chunk_size: iter([content])
+        return resp
+
+    dest = tmp_path / "testfile"
+
+    with patch("requests.get", side_effect=mock_get):
+        from bertytype_setup import installers
+        import importlib
+        importlib.reload(installers)
+        result = installers._download_file("http://example.com/file", dest, q, cancel, "test", expected_hash=expected_sha256)
+
+    assert result == dest
+
+
+def test_download_file_hash_verification_mismatch(tmp_path):
+    cancel = threading.Event()
+    q = queue.Queue()
+
+    expected_sha256 = "wronghash123"
+
+    def mock_get(*a, **kw):
+        resp = MagicMock()
+        resp.status_code = 200
+        resp.headers = {"content-length": "0"}
+        resp.raise_for_status = MagicMock()
+        resp.iter_content = lambda chunk_size: iter([b"some content"])
+        return resp
+
+    dest = tmp_path / "testfile"
+
+    with patch("requests.get", side_effect=mock_get):
+        from bertytype_setup import installers
+        import importlib
+        importlib.reload(installers)
+        result = installers._download_file("http://example.com/file", dest, q, cancel, "test", expected_hash=expected_sha256)
+
+    assert result is None
+
+
+def test_download_file_no_hash_skip_verification(tmp_path):
+    cancel = threading.Event()
+    q = queue.Queue()
+
+    def mock_get(*a, **kw):
+        resp = MagicMock()
+        resp.status_code = 200
+        resp.headers = {"content-length": "0"}
+        resp.raise_for_status = MagicMock()
+        resp.iter_content = lambda chunk_size: iter([b"any content"])
+        return resp
+
+    dest = tmp_path / "testfile"
+
+    with patch("requests.get", side_effect=mock_get):
+        from bertytype_setup import installers
+        import importlib
+        importlib.reload(installers)
+        result = installers._download_file("http://example.com/file", dest, q, cancel, "test", expected_hash=None)
+
+    assert result == dest
+
+
+def test_download_vibevoice_passes_none_hash():
+    cancel = threading.Event()
+    q = queue.Queue()
+
+    fake_files = ["config.json"]
+
+    from bertytype_setup import installers
+    with patch.object(installers, "_list_hf_files", return_value=fake_files), \
+         patch.object(installers, "_hf_download_file") as mock_dl:
+        installers.download_vibevoice(q, cancel)
+
+    mock_dl.assert_called_once_with("microsoft/VibeVoice-ASR-HF", "config.json", None)
+
+
 def test_install_ollama_success(tmp_path):
     cancel = threading.Event()
     q = queue.Queue()
