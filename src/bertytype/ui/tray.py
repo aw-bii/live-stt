@@ -69,8 +69,8 @@ def set_status(status: str) -> None:
         _signals.status_changed.emit(status)
 
 
-def notify(message: str) -> None:
-    _signals.notify_requested.emit(message)
+def notify(msg: str) -> None:
+    _signals.notify_requested.emit(msg)
 
 
 def start(
