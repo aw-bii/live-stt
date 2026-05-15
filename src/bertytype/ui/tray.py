@@ -6,10 +6,10 @@ from PySide6.QtWidgets import QSystemTrayIcon, QMenu
 from bertytype.ui.tokens import STATUS_COLORS as _STATUS_COLORS
 
 _BAR_HEIGHTS_BY_STATUS: dict[str, list[int]] = {
-    "idle":       [16, 32, 48, 32, 16],
-    "recording":  [52, 44, 52, 44, 52],
+    "idle": [16, 32, 48, 32, 16],
+    "recording": [52, 44, 52, 44, 52],
     "processing": [12, 44, 28, 52, 20],
-    "error":      [8,  8,  8,  8,  8],
+    "error": [8, 8, 8, 8, 8],
 }
 _BAR_WIDTH = 8
 _BAR_GAP = 4
@@ -18,7 +18,7 @@ _ICON_CACHE: dict[str, QIcon] = {}
 
 
 class _TraySignals(QObject):
-    status_changed   = Signal(str)
+    status_changed = Signal(str)
     notify_requested = Signal(str)
 
 
