@@ -85,3 +85,17 @@ def test_dialog_save_rejects_invalid_llm_timeout(qapp):
     dlg._save()
     assert saved == []
     assert dlg._error_lbl.text() != ""
+
+
+def test_dialog_save_on_save_exception_shows_error(qapp):
+    from bertytype.ui.settings import _SettingsDialog
+    from bertytype.config import Config
+    cfg = Config()
+
+    def raising_save(_):
+        raise OSError("disk full")
+
+    dlg = _SettingsDialog(cfg, on_save=raising_save)
+    dlg._save()
+    assert "disk full" in dlg._error_lbl.text()
+    assert dlg.result() != 1  # dialog did not accept
