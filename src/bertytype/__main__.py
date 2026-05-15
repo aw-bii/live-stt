@@ -92,12 +92,17 @@ def _on_transcribe_file() -> None:
     )
     if not path_str:
         return
+    threading.Thread(
+        target=_do_file_transcription, args=(Path(path_str),), daemon=True
+    ).start()
+
+
+def _do_file_transcription(path: Path) -> None:
     with _health_lock:
         health = _health.copy()
     with _cfg_lock:
         cfg = _cfg
     try:
-        path = Path(path_str)
         tray.set_status("processing")
         audio = reader.read_file(path)
         if not audio:
@@ -223,10 +228,10 @@ def _run_setup_if_needed() -> bool:
 
 
 def main() -> None:
+    log_module.init_file_logging()
     app = QApplication(sys.argv)
     app.setStyleSheet(tokens.build_qss())
     app.setQuitOnLastWindowClosed(False)
-    log_module.init_file_logging()
     global _cfg
     with _cfg_lock:
         _cfg = cfg_module.load()
