@@ -1,14 +1,44 @@
-from unittest.mock import MagicMock
 import bertytype.ui.tray as tray_module
 
 
-def test_notify_calls_icon_notify(monkeypatch):
-    mock_icon = MagicMock()
-    monkeypatch.setattr(tray_module, "_icon", mock_icon)
-    tray_module.notify("Done - saved to foo.txt")
-    mock_icon.notify.assert_called_once_with("Done - saved to foo.txt", "BertyType")
+def test_notify_emits_signal(qapp):
+    received = []
+    tray_module._signals.notify_requested.connect(received.append)
+    try:
+        tray_module.notify("Done - saved to foo.txt")
+        assert "Done - saved to foo.txt" in received
+    finally:
+        tray_module._signals.notify_requested.disconnect(received.append)
 
 
-def test_notify_is_no_op_when_no_icon(monkeypatch):
-    monkeypatch.setattr(tray_module, "_icon", None)
-    tray_module.notify("any message")  # must not raise
+def test_set_status_emits_signal(qapp):
+    received = []
+    tray_module._signals.status_changed.connect(received.append)
+    try:
+        original = tray_module._status
+        tray_module._status = "idle"
+        tray_module.set_status("recording")
+        assert "recording" in received
+    finally:
+        tray_module._status = original
+        tray_module._signals.status_changed.disconnect(received.append)
+
+
+def test_set_status_dedup_does_not_emit(qapp):
+    received = []
+    tray_module._signals.status_changed.connect(received.append)
+    try:
+        tray_module._status = "idle"
+        tray_module.set_status("idle")
+        assert received == []
+    finally:
+        tray_module._signals.status_changed.disconnect(received.append)
+
+
+def test_notify_no_crash_without_tray_icon(qapp):
+    original = tray_module._tray_icon
+    tray_module._tray_icon = None
+    try:
+        tray_module.notify("any message")  # must not raise
+    finally:
+        tray_module._tray_icon = original
