@@ -1,306 +1,167 @@
 from __future__ import annotations
-import tkinter as tk
-import customtkinter as ctk
 from typing import Callable
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QKeySequence
+from PySide6.QtWidgets import (
+    QDialog, QFormLayout, QScrollArea, QWidget, QVBoxLayout,
+    QHBoxLayout, QLabel, QComboBox, QKeySequenceEdit, QCheckBox,
+    QSlider, QLineEdit, QPushButton, QFrame,
+)
 from bertytype.config import Config
 
-_BG          = "#0f0f0f"
-_BG_ELEVATED = "#1e1e1e"
-_BORDER      = "#272727"
-_GREEN       = "#1ed760"
-_GREEN_HVR   = "#22e865"
-_TEXT        = "#f0f0f0"
-_HINT        = "#444444"
-_TEXT_DIM    = "#888888"
-_RED         = "#e84040"
-_FONT        = ("Consolas", 11)
-_FONT_SM     = ("Consolas", 9)
 
-_MODIFIER_KEYSYMS = frozenset({
-    "Control_L", "Control_R", "Shift_L", "Shift_R",
-    "Alt_L", "Alt_R", "Meta_L", "Meta_R",
-})
+def _qks_to_str(ks: QKeySequence) -> str:
+    return ks.toString(QKeySequence.SequenceFormat.PortableText).lower()
 
 
-def build_hotkey_string(state: int, keysym: str) -> str | None:
-    if keysym in _MODIFIER_KEYSYMS:
-        return None
-    parts = []
-    if state & 0x4:
-        parts.append("ctrl")
-    if state & 0x1:
-        parts.append("shift")
-    if state & 0x20000:
-        parts.append("alt")
-    parts.append(keysym.lower())
-    return "+".join(parts)
-
-
-class _HotkeyCapture(ctk.CTkFrame):
-    def __init__(self, parent: ctk.CTkBaseClass, value: str) -> None:
-        super().__init__(
-            parent,
-            fg_color=_BG_ELEVATED, border_color=_BORDER,
-            border_width=1, corner_radius=6, cursor="hand2",
-        )
-        self._prev   = value
-        self._value  = value
-        self._active = False
-        self._inner  = ctk.CTkFrame(self, fg_color="transparent")
-        self._inner.pack(padx=9, pady=5)
-        self._render(value)
-        self.bind("<Button-1>", self._start_capture)
-        self._inner.bind("<Button-1>", self._start_capture)
-        self.bind("<FocusOut>", self._on_focus_out)
-        self.bind("<KeyPress>", self._on_key)
-        tk.Widget.configure(self, takefocus=True)
-
-    def _render(self, value: str) -> None:
-        for w in self._inner.winfo_children():
-            w.destroy()
-        if not value or value == "Press hotkey...":
-            lbl = ctk.CTkLabel(
-                self._inner, text=value or "Press hotkey...",
-                font=_FONT_SM, text_color=_HINT,
-            )
-            lbl.pack(side="left")
-            lbl.bind("<Button-1>", self._start_capture)
-            return
-        for i, part in enumerate(value.split("+")):
-            if i:
-                sep = ctk.CTkLabel(
-                    self._inner, text="+", font=_FONT_SM, text_color=_HINT,
-                )
-                sep.pack(side="left", padx=2)
-                sep.bind("<Button-1>", self._start_capture)
-            badge = ctk.CTkFrame(
-                self._inner, fg_color="#1a1a1a",
-                border_color=_BORDER, border_width=1, corner_radius=4,
-            )
-            badge.pack(side="left", padx=1)
-            badge.bind("<Button-1>", self._start_capture)
-            lbl = ctk.CTkLabel(
-                badge, text=part, font=_FONT_SM, text_color=_TEXT_DIM,
-            )
-            lbl.pack(padx=5, pady=2)
-            lbl.bind("<Button-1>", self._start_capture)
-
-    def _start_capture(self, _event=None) -> None:
-        self._prev   = self._value
-        self._active = True
-        self.configure(border_color=_GREEN)
-        self._render("Press hotkey...")
-        self.focus_set()
-
-    def _on_focus_out(self, _event=None) -> None:
-        if self._active:
-            self._active = False
-            self.configure(border_color=_BORDER)
-            self._value = self._prev
-            self._render(self._prev)
-
-    def _on_key(self, event) -> str:
-        if not self._active:
-            return ""
-        result = build_hotkey_string(int(event.state), event.keysym)
-        if result is not None:
-            self._active = False
-            self.configure(border_color=_BORDER)
-            self._value  = result
-            self._render(result)
-        return "break"
-
-    def get(self) -> str:
-        return self._value
+def _str_to_qks(s: str) -> QKeySequence:
+    return QKeySequence.fromString(s)
 
 
 def open_settings(cfg: Config, on_save: Callable[[Config], None]) -> None:
-    ctk.set_appearance_mode("dark")
+    dlg = _SettingsDialog(cfg, on_save)
+    dlg.exec()
 
-    win = ctk.CTk()
-    win.title("BertyType Settings")
-    win.geometry("540x560")
-    win.resizable(False, False)
-    win.configure(fg_color=_BG)
 
-    content = ctk.CTkFrame(win, fg_color=_BG, corner_radius=0)
-    content.pack(fill="both", expand=True)
+class _SettingsDialog(QDialog):
+    def __init__(self, cfg: Config, on_save: Callable[[Config], None]) -> None:
+        super().__init__()
+        self.setWindowTitle("BertyType Settings")
+        self.setMinimumSize(480, 400)
+        self._on_save = on_save
+        self._build_ui(cfg)
 
-    def _sep() -> None:
-        sep = tk.Frame(content, height=1, bg=_BORDER)
-        sep.pack(fill="x")
+    def _build_ui(self, cfg: Config) -> None:
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
+        outer.setSpacing(0)
 
-    def _row(label: str, hint: str) -> ctk.CTkFrame:
-        row = ctk.CTkFrame(content, fg_color="transparent", corner_radius=0)
-        row.pack(fill="x")
-        lft = ctk.CTkFrame(row, fg_color="transparent")
-        lft.pack(side="left", fill="both", expand=True, padx=17, pady=9)
-        ctk.CTkLabel(lft, text=label, font=_FONT,    text_color=_TEXT, anchor="w").pack(fill="x")
-        ctk.CTkLabel(lft, text=hint,  font=_FONT_SM, text_color=_HINT, anchor="w").pack(fill="x")
-        rgt = ctk.CTkFrame(row, fg_color="transparent")
-        rgt.pack(side="right", padx=17, pady=9)
-        return rgt
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        form_widget = QWidget()
+        form = QFormLayout(form_widget)
+        form.setContentsMargins(18, 12, 18, 12)
+        form.setHorizontalSpacing(16)
+        form.setVerticalSpacing(10)
 
-    mode_var = tk.StringVar(value=cfg.hotkey_mode)
-    ctk.CTkOptionMenu(
-        _row("Recording Mode", "How to start and stop recording"),
-        variable=mode_var, values=["ptt", "double_tap_toggle"],
-        fg_color=_BG_ELEVATED, button_color=_BORDER, button_hover_color="#333333",
-        text_color=_TEXT, dropdown_fg_color="#161616",
-        dropdown_hover_color="#272727", dropdown_text_color=_TEXT,
-        font=_FONT, dropdown_font=_FONT, width=160, corner_radius=6,
-    ).pack()
-    _sep()
+        self._mode_combo = QComboBox()
+        self._mode_combo.addItems(["ptt", "double_tap_toggle"])  # matches _VALID_HOTKEY_MODES
+        self._mode_combo.setCurrentText(cfg.hotkey_mode)
+        form.addRow("Recording Mode", self._mode_combo)
 
-    hotkey_cap = _HotkeyCapture(
-        _row("Hotkey", "Key to hold (PTT) or tap (toggle)"), cfg.hotkey
-    )
-    hotkey_cap.pack()
-    _sep()
+        self._hotkey_edit = QKeySequenceEdit(_str_to_qks(cfg.hotkey))
+        form.addRow("Hotkey", self._hotkey_edit)
 
-    dbl_var = tk.DoubleVar(value=cfg.double_tap_window)
-    dbl_ctrl = ctk.CTkFrame(
-        _row("Double-tap Window", "Max gap between taps (0.05 - 2.0 s)"),
-        fg_color="transparent",
-    )
-    dbl_ctrl.pack()
-    dbl_lbl = ctk.CTkLabel(
-        dbl_ctrl, text=f"{cfg.double_tap_window:.2f}s",
-        font=_FONT, text_color=_GREEN, width=42, anchor="e",
-    )
-    dbl_lbl.pack(side="right", padx=(6, 0))
-
-    def _on_dbl(v: float) -> None:
-        snapped = round(round(v / 0.05) * 0.05, 2)
-        dbl_var.set(snapped)
-        dbl_lbl.configure(text=f"{snapped:.2f}s")
-
-    ctk.CTkSlider(
-        dbl_ctrl, from_=0.05, to=2.0, variable=dbl_var, command=_on_dbl,
-        width=110, fg_color=_BG_ELEVATED, progress_color=_GREEN,
-        button_color=_GREEN, button_hover_color=_GREEN_HVR,
-    ).pack(side="left")
-    _sep()
-
-    cancel_cap = _HotkeyCapture(
-        _row("Cancel Hotkey", "Abort an in-progress recording"), cfg.cancel_hotkey
-    )
-    cancel_cap.pack()
-    _sep()
-
-    model_var = tk.StringVar(value=cfg.model)
-    ctk.CTkEntry(
-        _row("LLM Model", "Ollama model name for refinement"),
-        textvariable=model_var, width=140, font=_FONT,
-        fg_color=_BG_ELEVATED, border_color=_BORDER, text_color=_TEXT, corner_radius=6,
-    ).pack()
-    _sep()
-
-    refine_var = tk.BooleanVar(value=cfg.refine)
-    ctk.CTkSwitch(
-        _row("Refine with LLM", "Pass STT output through Gemma 4"),
-        variable=refine_var, text="",
-        fg_color="#333333", progress_color=_GREEN,
-        button_color="#ffffff", button_hover_color="#dddddd",
-    ).pack()
-    _sep()
-
-    vad_var = tk.DoubleVar(value=cfg.vad_threshold)
-    vad_ctrl = ctk.CTkFrame(
-        _row("VAD Threshold", "Voice activity sensitivity (0.0 - 0.5)"),
-        fg_color="transparent",
-    )
-    vad_ctrl.pack()
-    vad_lbl = ctk.CTkLabel(
-        vad_ctrl, text=f"{cfg.vad_threshold:.2f}",
-        font=_FONT, text_color=_GREEN, width=36, anchor="e",
-    )
-    vad_lbl.pack(side="right", padx=(6, 0))
-
-    def _on_vad(v: float) -> None:
-        snapped = round(round(v / 0.01) * 0.01, 2)
-        vad_var.set(snapped)
-        vad_lbl.configure(text=f"{snapped:.2f}")
-
-    ctk.CTkSlider(
-        vad_ctrl, from_=0.0, to=0.5, variable=vad_var, command=_on_vad,
-        width=110, fg_color=_BG_ELEVATED, progress_color=_GREEN,
-        button_color=_GREEN, button_hover_color=_GREEN_HVR,
-    ).pack(side="left")
-    _sep()
-
-    llm_to_var = tk.StringVar(value=str(cfg.llm_timeout))
-    to_ctrl = ctk.CTkFrame(
-        _row("LLM Timeout", "Seconds before giving up on LLM"),
-        fg_color="transparent",
-    )
-    to_ctrl.pack()
-    ctk.CTkEntry(
-        to_ctrl, textvariable=llm_to_var, width=58, font=_FONT,
-        fg_color=_BG_ELEVATED, border_color=_BORDER, text_color=_TEXT, corner_radius=6,
-    ).pack(side="left")
-    ctk.CTkLabel(to_ctrl, text="sec", font=_FONT_SM, text_color=_HINT).pack(
-        side="left", padx=(5, 0)
-    )
-    _sep()
-
-    inj_var = tk.StringVar(value=str(cfg.injection_delay))  # no separator after last row
-    inj_ctrl = ctk.CTkFrame(
-        _row("Injection Delay", "Pause before typing into active window"),
-        fg_color="transparent",
-    )
-    inj_ctrl.pack()
-    ctk.CTkEntry(
-        inj_ctrl, textvariable=inj_var, width=58, font=_FONT,
-        fg_color=_BG_ELEVATED, border_color=_BORDER, text_color=_TEXT, corner_radius=6,
-    ).pack(side="left")
-    ctk.CTkLabel(inj_ctrl, text="sec", font=_FONT_SM, text_color=_HINT).pack(
-        side="left", padx=(5, 0)
-    )
-
-    error_lbl = ctk.CTkLabel(win, text="", font=_FONT_SM, text_color=_RED, anchor="e")
-    error_lbl.pack(fill="x", padx=17, pady=(6, 0))
-
-    tk.Frame(win, height=1, bg=_BORDER).pack(fill="x")
-    footer = ctk.CTkFrame(win, fg_color=_BG, corner_radius=0)
-    footer.pack(fill="x", padx=17, pady=11)
-
-    def _save() -> None:
-        error_lbl.configure(text="")
-        try:
-            llm_to  = int(llm_to_var.get())
-            inj_del = float(inj_var.get())
-        except ValueError as exc:
-            error_lbl.configure(text=f"Invalid value: {exc}")
-            return
-        if not (1 <= llm_to <= 600):
-            error_lbl.configure(text="LLM timeout must be between 1 and 600 seconds")
-            return
-        if not (0.0 <= inj_del <= 10.0):
-            error_lbl.configure(text="Injection delay must be between 0.0 and 10.0 seconds")
-            return
-        new_cfg = Config(
-            hotkey=hotkey_cap.get(),
-            cancel_hotkey=cancel_cap.get(),
-            model=model_var.get().strip(),
-            refine=refine_var.get(),
-            vad_threshold=round(vad_var.get(), 3),
-            hotkey_mode=mode_var.get(),
-            double_tap_window=round(dbl_var.get(), 3),
-            llm_timeout=llm_to,
-            injection_delay=inj_del,
+        self._dtw_slider = QSlider(Qt.Orientation.Horizontal)
+        self._dtw_slider.setRange(5, 200)
+        self._dtw_slider.setValue(int(cfg.double_tap_window * 100))
+        self._dtw_label = QLabel(f"{cfg.double_tap_window:.2f}s")
+        self._dtw_slider.valueChanged.connect(
+            lambda v: self._dtw_label.setText(f"{v / 100:.2f}s")
         )
-        try:
-            on_save(new_cfg)
-        except Exception as exc:
-            error_lbl.configure(text=f"Save failed: {exc}")
+        dtw_row = QWidget()
+        dtw_layout = QHBoxLayout(dtw_row)
+        dtw_layout.setContentsMargins(0, 0, 0, 0)
+        dtw_layout.addWidget(self._dtw_slider)
+        dtw_layout.addWidget(self._dtw_label)
+        form.addRow("Double-tap Window", dtw_row)
+
+        self._cancel_edit = QKeySequenceEdit(_str_to_qks(cfg.cancel_hotkey))
+        form.addRow("Cancel Hotkey", self._cancel_edit)
+
+        self._model_edit = QLineEdit(cfg.model)
+        form.addRow("LLM Model", self._model_edit)
+
+        self._refine_check = QCheckBox()
+        self._refine_check.setChecked(cfg.refine)
+        form.addRow("Refine with LLM", self._refine_check)
+
+        self._vad_slider = QSlider(Qt.Orientation.Horizontal)
+        self._vad_slider.setRange(0, 50)
+        self._vad_slider.setValue(int(cfg.vad_threshold * 100))
+        self._vad_label = QLabel(f"{cfg.vad_threshold:.2f}")
+        self._vad_slider.valueChanged.connect(
+            lambda v: self._vad_label.setText(f"{v / 100:.2f}")
+        )
+        vad_row = QWidget()
+        vad_layout = QHBoxLayout(vad_row)
+        vad_layout.setContentsMargins(0, 0, 0, 0)
+        vad_layout.addWidget(self._vad_slider)
+        vad_layout.addWidget(self._vad_label)
+        form.addRow("VAD Threshold", vad_row)
+
+        self._llm_to_edit = QLineEdit(str(cfg.llm_timeout))
+        form.addRow("LLM Timeout", self._llm_to_edit)
+
+        self._delay_edit = QLineEdit(str(cfg.injection_delay))
+        form.addRow("Injection Delay", self._delay_edit)
+
+        scroll.setWidget(form_widget)
+        outer.addWidget(scroll, 1)
+
+        footer = QWidget()
+        footer_layout = QHBoxLayout(footer)
+        footer_layout.setContentsMargins(18, 10, 18, 10)
+        self._error_lbl = QLabel()
+        self._error_lbl.setObjectName("errorLabel")
+        self._error_lbl.setStyleSheet("color: #e84040;")
+        self._error_lbl.setFocusPolicy(Qt.FocusPolicy.TabFocus)
+        footer_layout.addWidget(self._error_lbl, 1)
+        save_btn = QPushButton("Save Settings")
+        save_btn.setProperty("accent", True)
+        save_btn.clicked.connect(self._save)
+        footer_layout.addWidget(save_btn)
+        outer.addWidget(footer)
+
+    def _err(self, msg: str) -> None:
+        self._error_lbl.setText(msg)
+        self._error_lbl.setFocus()
+
+    def _save(self) -> None:
+        self._error_lbl.setText("")
+
+        hotkey = _qks_to_str(self._hotkey_edit.keySequence())
+        if not hotkey:
+            self._err("Hotkey must not be empty")
             return
-        win.destroy()
 
-    ctk.CTkButton(
-        footer, text="Save Settings", command=_save,
-        fg_color=_GREEN, hover_color=_GREEN_HVR, text_color="#000000",
-        font=_FONT, corner_radius=100, width=130, height=32,
-    ).pack(side="right")
+        cancel_hotkey = _qks_to_str(self._cancel_edit.keySequence())
+        if not cancel_hotkey:
+            self._err("Cancel Hotkey must not be empty")
+            return
 
-    win.mainloop()
+        model = self._model_edit.text().strip()
+        if not model:
+            self._err("LLM Model must not be empty")
+            return
+
+        try:
+            llm_timeout = int(self._llm_to_edit.text())
+            if not (1 <= llm_timeout <= 600):
+                raise ValueError
+        except ValueError:
+            self._err("LLM Timeout must be a whole number between 1 and 600")
+            return
+
+        try:
+            injection_delay = float(self._delay_edit.text())
+            if not (0.0 <= injection_delay <= 5.0):
+                raise ValueError
+        except ValueError:
+            self._err("Injection Delay must be a number between 0.0 and 5.0")
+            return
+
+        updated = Config(
+            hotkey=hotkey,
+            hotkey_mode=self._mode_combo.currentText(),
+            cancel_hotkey=cancel_hotkey,
+            model=model,
+            refine=self._refine_check.isChecked(),
+            vad_threshold=self._vad_slider.value() / 100,
+            llm_timeout=llm_timeout,
+            injection_delay=injection_delay,
+            double_tap_window=self._dtw_slider.value() / 100,
+        )
+        self._on_save(updated)
+        self.accept()
