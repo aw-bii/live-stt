@@ -42,3 +42,15 @@ def test_notify_no_crash_without_tray_icon(qapp):
         tray_module.notify("any message")  # must not raise
     finally:
         tray_module._tray_icon = original
+
+
+def test_set_status_no_crash_without_tray_icon(qapp):
+    from bertytype.ui import tray as tray_module_local
+    from PySide6.QtCore import QCoreApplication
+    original = tray_module_local._status
+    try:
+        tray_module_local._status = "idle"
+        tray_module_local.set_status("recording")  # must not raise
+        QCoreApplication.processEvents()
+    finally:
+        tray_module_local._status = original

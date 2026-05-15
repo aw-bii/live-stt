@@ -12,8 +12,8 @@ _BAR_HEIGHTS_BY_STATUS: dict[str, list[int]] = {
     "error":      [8,  8,  8,  8,  8],
 }
 _BAR_WIDTH = 8
-_BAR_GAP   = 4
-_CANVAS    = 64
+_BAR_GAP = 4
+_CANVAS = 64
 _ICON_CACHE: dict[str, QIcon] = {}
 
 
@@ -22,15 +22,15 @@ class _TraySignals(QObject):
     notify_requested = Signal(str)
 
 
-_signals    = _TraySignals()
+_signals = _TraySignals()
 _tray_icon: QSystemTrayIcon | None = None
-_status     = "idle"
+_status = "idle"
 
 
 def _make_icon(status: str) -> QIcon:
     if status in _ICON_CACHE:
         return _ICON_CACHE[status]
-    color_hex  = _STATUS_COLORS.get(status, _STATUS_COLORS["error"])
+    color_hex = _STATUS_COLORS.get(status, _STATUS_COLORS["idle"])
     bar_heights = _BAR_HEIGHTS_BY_STATUS.get(status, _BAR_HEIGHTS_BY_STATUS["idle"])
     px = QPixmap(_CANVAS, _CANVAS)
     px.fill(Qt.GlobalColor.transparent)
@@ -52,8 +52,6 @@ def _make_icon(status: str) -> QIcon:
 
 def _on_status_changed(status: str) -> None:
     global _status
-    if status == _status:
-        return
     _status = status
     if _tray_icon is not None:
         _tray_icon.setIcon(_make_icon(status))
@@ -61,7 +59,7 @@ def _on_status_changed(status: str) -> None:
 
 def _on_notify_requested(msg: str) -> None:
     if _tray_icon is not None:
-        _tray_icon.showMessage("BertyType", msg)
+        _tray_icon.showMessage("BertyType", msg, QSystemTrayIcon.MessageIcon.NoIcon, 3000)
 
 
 def set_status(status: str) -> None:
@@ -82,10 +80,12 @@ def start(
     """Register the tray icon and return immediately (non-blocking)."""
     global _tray_icon
     _signals.status_changed.connect(
-        _on_status_changed, Qt.ConnectionType.QueuedConnection
+        _on_status_changed,
+        Qt.ConnectionType.QueuedConnection | Qt.ConnectionType.UniqueConnection,
     )
     _signals.notify_requested.connect(
-        _on_notify_requested, Qt.ConnectionType.QueuedConnection
+        _on_notify_requested,
+        Qt.ConnectionType.QueuedConnection | Qt.ConnectionType.UniqueConnection,
     )
     menu = QMenu()
     menu.addAction("Transcribe file...", on_transcribe_file)
