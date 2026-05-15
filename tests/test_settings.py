@@ -54,3 +54,34 @@ def test_dialog_save_rejects_empty_hotkey(qapp):
     dlg._save()
     assert saved == []
     assert dlg._error_lbl.text() != ""
+
+
+def test_str_to_qks_not_empty_for_default_hotkeys():
+    from bertytype.ui.settings import _str_to_qks
+    assert not _str_to_qks("alt").isEmpty()
+    assert not _str_to_qks("escape").isEmpty()
+    assert not _str_to_qks("ctrl+shift+space").isEmpty()
+
+
+def test_dialog_save_rejects_unsafe_model(qapp):
+    from bertytype.ui.settings import _SettingsDialog
+    from bertytype.config import Config
+    saved = []
+    cfg = Config()
+    dlg = _SettingsDialog(cfg, on_save=saved.append)
+    dlg._model_edit.setText("; rm -rf ~")
+    dlg._save()
+    assert saved == []
+    assert dlg._error_lbl.text() != ""
+
+
+def test_dialog_save_rejects_invalid_llm_timeout(qapp):
+    from bertytype.ui.settings import _SettingsDialog
+    from bertytype.config import Config
+    saved = []
+    cfg = Config()
+    dlg = _SettingsDialog(cfg, on_save=saved.append)
+    dlg._llm_to_edit.setText("999")
+    dlg._save()
+    assert saved == []
+    assert dlg._error_lbl.text() != ""

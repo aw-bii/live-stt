@@ -7,7 +7,7 @@ from PySide6.QtWidgets import (
     QHBoxLayout, QLabel, QComboBox, QKeySequenceEdit, QCheckBox,
     QSlider, QLineEdit, QPushButton, QFrame,
 )
-from bertytype.config import Config
+from bertytype.config import Config, _is_safe_model_name, _VALID_HOTKEY_MODES
 
 
 def _qks_to_str(ks: QKeySequence) -> str:
@@ -15,7 +15,7 @@ def _qks_to_str(ks: QKeySequence) -> str:
 
 
 def _str_to_qks(s: str) -> QKeySequence:
-    return QKeySequence.fromString(s)
+    return QKeySequence.fromString(s, QKeySequence.SequenceFormat.PortableText)
 
 
 def open_settings(cfg: Config, on_save: Callable[[Config], None]) -> None:
@@ -46,7 +46,7 @@ class _SettingsDialog(QDialog):
         form.setVerticalSpacing(10)
 
         self._mode_combo = QComboBox()
-        self._mode_combo.addItems(["ptt", "double_tap_toggle"])  # matches _VALID_HOTKEY_MODES
+        self._mode_combo.addItems(sorted(_VALID_HOTKEY_MODES))
         self._mode_combo.setCurrentText(cfg.hotkey_mode)
         form.addRow("Recording Mode", self._mode_combo)
 
@@ -55,7 +55,7 @@ class _SettingsDialog(QDialog):
 
         self._dtw_slider = QSlider(Qt.Orientation.Horizontal)
         self._dtw_slider.setRange(5, 200)
-        self._dtw_slider.setValue(int(cfg.double_tap_window * 100))
+        self._dtw_slider.setValue(round(cfg.double_tap_window * 100))
         self._dtw_label = QLabel(f"{cfg.double_tap_window:.2f}s")
         self._dtw_slider.valueChanged.connect(
             lambda v: self._dtw_label.setText(f"{v / 100:.2f}s")
@@ -78,8 +78,8 @@ class _SettingsDialog(QDialog):
         form.addRow("Refine with LLM", self._refine_check)
 
         self._vad_slider = QSlider(Qt.Orientation.Horizontal)
-        self._vad_slider.setRange(0, 50)
-        self._vad_slider.setValue(int(cfg.vad_threshold * 100))
+        self._vad_slider.setRange(0, 100)
+        self._vad_slider.setValue(round(cfg.vad_threshold * 100))
         self._vad_label = QLabel(f"{cfg.vad_threshold:.2f}")
         self._vad_slider.valueChanged.connect(
             lambda v: self._vad_label.setText(f"{v / 100:.2f}")
@@ -107,6 +107,7 @@ class _SettingsDialog(QDialog):
         self._error_lbl.setObjectName("errorLabel")
         self._error_lbl.setStyleSheet("color: #e84040;")
         self._error_lbl.setFocusPolicy(Qt.FocusPolicy.TabFocus)
+        self._error_lbl.setAccessibleName("Error")
         footer_layout.addWidget(self._error_lbl, 1)
         save_btn = QPushButton("Save Settings")
         save_btn.setProperty("accent", True)
@@ -136,6 +137,10 @@ class _SettingsDialog(QDialog):
             self._err("LLM Model must not be empty")
             return
 
+        if not _is_safe_model_name(model):
+            self._err("Model name contains invalid characters")
+            return
+
         try:
             llm_timeout = int(self._llm_to_edit.text())
             if not (1 <= llm_timeout <= 600):
@@ -163,5 +168,9 @@ class _SettingsDialog(QDialog):
             injection_delay=injection_delay,
             double_tap_window=self._dtw_slider.value() / 100,
         )
-        self._on_save(updated)
+        try:
+            self._on_save(updated)
+        except Exception as exc:
+            self._err(f"Could not save settings: {exc}")
+            return
         self.accept()
