@@ -70,6 +70,19 @@ class _InstallWorker(QThread):
                 item = q.get(timeout=0.05)
             except queue.Empty:
                 if not t.is_alive():
+                    # drain any remaining items the thread may have put in after is_alive() returned False
+                    while True:
+                        try:
+                            item = q.get_nowait()
+                        except queue.Empty:
+                            break
+                        event, *args = item
+                        if event in _dispatch:
+                            _dispatch[event](*args)
+                        if event == "step_failed":
+                            failures.append(args[0])
+                        if event == "all_done":
+                            break
                     break
                 continue
             event, *args = item
@@ -221,7 +234,6 @@ class InstallPage(QWizardPage):
     def _on_step_failed(self, key: str) -> None:
         if key in self._indicators:
             self._indicators[key].setText("Failed")
-        self._failures.append(key)
         self._advance_overall()
 
     def _on_step_progress(self, key: str, fraction: float) -> None:
@@ -306,4 +318,4 @@ class SetupWizard(QWizard):
     @property
     def launch_requested(self) -> bool:
         finish_page = self.page(_PAGE_FINISH)
-        return finish_page.launch_requested() if finish_page else True
+        return finish_page.launch_requested() if finish_page else False

@@ -83,3 +83,16 @@ def test_check_page_no_steps_when_all_present(qapp):
     page = CheckPage()
     page._on_check_done({"ollama": True, "model": True, "vibevoice": True})
     assert page.steps_to_install() == []
+
+
+def test_check_page_starts_incomplete(qapp):
+    from bertytype_setup.wizard import CheckPage
+    page = CheckPage()
+    assert not page.isComplete()
+
+
+def test_check_page_complete_after_check_done(qapp):
+    from bertytype_setup.wizard import CheckPage
+    page = CheckPage()
+    page._on_check_done({"ollama": True, "model": True, "vibevoice": True})
+    assert page.isComplete()
