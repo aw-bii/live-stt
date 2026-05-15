@@ -11,6 +11,11 @@ logger = log_module.logger
 _VALID_HOTKEY_MODES = {"ptt", "double_tap_toggle"}
 
 
+def _is_safe_model_name(model: str) -> bool:
+    dangerous = {"../", ";", "$", "|", ">", "<", "`", "&&", "||"}
+    return not any(pattern in model for pattern in dangerous)
+
+
 @dataclass
 class Config:
     hotkey: str = "alt"
@@ -25,9 +30,16 @@ class Config:
 
 
 def _validate_value(key: str, value, default):
-    if key in ("hotkey", "cancel_hotkey", "model"):
+    if key in ("hotkey", "cancel_hotkey"):
         if not isinstance(value, str) or not value.strip():
             logger.warning(f"Invalid {key}: {value!r}, using default {default!r}")
+            return default
+    elif key == "model":
+        if not isinstance(value, str) or not value.strip():
+            logger.warning(f"Invalid model: {value!r}, using default {default!r}")
+            return default
+        if not _is_safe_model_name(value):
+            logger.warning(f"Suspicious model name: {value!r}, using default {default!r}")
             return default
     elif key == "refine":
         if not isinstance(value, bool):

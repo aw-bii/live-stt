@@ -1,42 +1,101 @@
-from bertytype.ui.settings import build_hotkey_string
+import pytest
+from PySide6.QtGui import QKeySequence
 
 
-def test_returns_none_for_control_l():
-    assert build_hotkey_string(0, "Control_L") is None
+def test_qks_round_trip_ctrl_shift_space():
+    from bertytype.ui.settings import _qks_to_str, _str_to_qks
+    assert _qks_to_str(_str_to_qks("ctrl+shift+space")) == "ctrl+shift+space"
 
 
-def test_returns_none_for_shift_r():
-    assert build_hotkey_string(0, "Shift_R") is None
+def test_qks_round_trip_alt_f9():
+    from bertytype.ui.settings import _qks_to_str, _str_to_qks
+    assert _qks_to_str(_str_to_qks("alt+f9")) == "alt+f9"
 
 
-def test_returns_none_for_alt_l():
-    assert build_hotkey_string(0, "Alt_L") is None
+def test_empty_sequence_returns_empty():
+    from bertytype.ui.settings import _qks_to_str
+    assert _qks_to_str(QKeySequence()) == ""
 
 
-def test_plain_key_no_modifiers():
-    assert build_hotkey_string(0, "space") == "space"
+def test_output_is_lowercase():
+    from bertytype.ui.settings import _qks_to_str, _str_to_qks
+    result = _qks_to_str(_str_to_qks("ctrl+shift+space"))
+    assert result == result.lower()
 
 
-def test_ctrl_modifier():
-    assert build_hotkey_string(0x4, "space") == "ctrl+space"
+def test_dialog_opens_without_crash(qapp):
+    from bertytype.ui.settings import _SettingsDialog
+    from bertytype.config import Config
+    cfg = Config()
+    dlg = _SettingsDialog(cfg, on_save=lambda c: None)
+    assert dlg is not None
+    dlg.close()
 
 
-def test_ctrl_shift_modifier():
-    assert build_hotkey_string(0x4 | 0x1, "space") == "ctrl+shift+space"
+def test_dialog_save_calls_on_save(qapp):
+    from bertytype.ui.settings import _SettingsDialog
+    from bertytype.config import Config
+    saved = []
+    cfg = Config()
+    dlg = _SettingsDialog(cfg, on_save=saved.append)
+    dlg._save()
+    assert len(saved) == 1
+    assert isinstance(saved[0], Config)
 
 
-def test_alt_modifier():
-    assert build_hotkey_string(0x20000, "f9") == "alt+f9"
+def test_dialog_save_rejects_empty_hotkey(qapp):
+    from bertytype.ui.settings import _SettingsDialog
+    from bertytype.config import Config
+    from PySide6.QtGui import QKeySequence
+    saved = []
+    cfg = Config()
+    dlg = _SettingsDialog(cfg, on_save=saved.append)
+    dlg._hotkey_edit.setKeySequence(QKeySequence())
+    dlg._save()
+    assert saved == []
+    assert dlg._error_lbl.text() != ""
 
 
-def test_mod1_bit_not_treated_as_alt():
-    # 0x8 is NumLock/Mod1 on Windows, not Alt - should produce no modifier prefix
-    assert build_hotkey_string(0x8, "f9") == "f9"
+def test_str_to_qks_not_empty_for_default_hotkeys():
+    from bertytype.ui.settings import _str_to_qks
+    assert not _str_to_qks("alt").isEmpty()
+    assert not _str_to_qks("escape").isEmpty()
+    assert not _str_to_qks("ctrl+shift+space").isEmpty()
 
 
-def test_keysym_is_lowercased():
-    assert build_hotkey_string(0, "Return") == "return"
+def test_dialog_save_rejects_unsafe_model(qapp):
+    from bertytype.ui.settings import _SettingsDialog
+    from bertytype.config import Config
+    saved = []
+    cfg = Config()
+    dlg = _SettingsDialog(cfg, on_save=saved.append)
+    dlg._model_edit.setText("; rm -rf ~")
+    dlg._save()
+    assert saved == []
+    assert dlg._error_lbl.text() != ""
 
 
-def test_ctrl_shift_key_matches_config_default():
-    assert build_hotkey_string(0x4 | 0x1, "space") == "ctrl+shift+space"
+def test_dialog_save_rejects_invalid_llm_timeout(qapp):
+    from bertytype.ui.settings import _SettingsDialog
+    from bertytype.config import Config
+    saved = []
+    cfg = Config()
+    dlg = _SettingsDialog(cfg, on_save=saved.append)
+    dlg._llm_to_edit.setText("999")
+    dlg._save()
+    assert saved == []
+    assert dlg._error_lbl.text() != ""
+
+
+def test_dialog_save_on_save_exception_shows_error(qapp):
+    from bertytype.ui.settings import _SettingsDialog
+    from bertytype.config import Config
+    cfg = Config()
+
+    def raising_save(_):
+        raise OSError("disk full")
+
+    dlg = _SettingsDialog(cfg, on_save=raising_save)
+    dlg._save()
+    assert "disk full" in dlg._error_lbl.text()
+    assert dlg.result() != 1  # dialog did not accept

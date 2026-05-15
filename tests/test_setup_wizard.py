@@ -1,81 +1,98 @@
 import queue
 import threading
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 
-def _make_wizard_no_tk():
-    """Construct a Wizard bypassing tkinter initialisation."""
-    with patch("tkinter.Tk"):
-        from bertytype_setup import wizard as wiz_mod
-        import importlib
-        importlib.reload(wiz_mod)
-        w = wiz_mod.Wizard.__new__(wiz_mod.Wizard)
-        w._queue = queue.Queue()
-        w._cancel = threading.Event()
-        w._failures = []
-        w._steps_to_install = []
-        w._check_results = {}
-        w._root = MagicMock()
-        w._current_frame = None
-        w._install_frame = MagicMock()
-        w._show_finish = MagicMock()
-        return w
+def test_check_worker_emits_check_done(qapp):
+    from bertytype_setup.wizard import _CheckWorker
+    from PySide6.QtTest import QSignalSpy
+
+    fake_result = {"ollama": True, "model": False, "vibevoice": False}
+    with patch("bertytype_setup.checks.check_all", return_value=fake_result):
+        worker = _CheckWorker()
+        spy = QSignalSpy(worker.check_done)
+        worker.run()
+        assert spy.count() == 1
+        assert spy.at(0)[0] == fake_result
 
 
-def test_poll_queue_dispatches_log():
-    w = _make_wizard_no_tk()
-    w._queue.put(("log", "hello world"))
-    w._queue.put(("all_done", {}))
-    w._poll_queue()
-    w._install_frame.log.assert_called_with("hello world")
-    w._show_finish.assert_called_once_with([])
+def test_install_worker_emits_log(qapp):
+    from bertytype_setup.wizard import _InstallWorker
+    from PySide6.QtTest import QSignalSpy
+
+    cancel = threading.Event()
+
+    def fake_install(q, cancel, steps):
+        q.put(("log", "hello world"))
+        q.put(("all_done",))
+
+    with patch("bertytype_setup.installers.run_all_installs", fake_install):
+        worker = _InstallWorker(["ollama"], cancel)
+        spy = QSignalSpy(worker.log_msg)
+        worker.run()
+        assert spy.count() == 1
+        assert spy.at(0)[0] == "hello world"
 
 
-def test_poll_queue_dispatches_step_done():
-    w = _make_wizard_no_tk()
-    w._queue.put(("step_done", "ollama"))
-    w._queue.put(("all_done", {}))
-    w._poll_queue()
-    w._install_frame.step_done.assert_called_with("ollama")
+def test_install_worker_records_failures(qapp):
+    from bertytype_setup.wizard import _InstallWorker
+    from PySide6.QtTest import QSignalSpy
+
+    cancel = threading.Event()
+
+    def fake_install(q, cancel, steps):
+        q.put(("step_failed", "model"))
+        q.put(("all_done",))
+
+    with patch("bertytype_setup.installers.run_all_installs", fake_install):
+        worker = _InstallWorker(["model"], cancel)
+        spy = QSignalSpy(worker.all_done)
+        worker.run()
+        assert spy.count() == 1
+        assert spy.at(0)[0] == ["model"]
 
 
-def test_poll_queue_dispatches_step_failed_records_failure():
-    w = _make_wizard_no_tk()
-    w._queue.put(("step_failed", "model"))
-    w._queue.put(("all_done", {}))
-    w._poll_queue()
-    w._install_frame.step_failed.assert_called_with("model")
-    assert "model" in w._failures
-    w._show_finish.assert_called_once_with(["model"])
+def test_install_worker_emits_step_progress(qapp):
+    from bertytype_setup.wizard import _InstallWorker
+    from PySide6.QtTest import QSignalSpy
+
+    cancel = threading.Event()
+
+    def fake_install(q, cancel, steps):
+        q.put(("step_progress", "ollama", 0.5))
+        q.put(("all_done",))
+
+    with patch("bertytype_setup.installers.run_all_installs", fake_install):
+        worker = _InstallWorker(["ollama"], cancel)
+        spy = QSignalSpy(worker.step_progress)
+        worker.run()
+        assert spy.count() == 1
+        assert spy.at(0)[0] == "ollama"
+        assert abs(spy.at(0)[1] - 0.5) < 0.001
 
 
-def test_poll_queue_dispatches_step_skipped():
-    w = _make_wizard_no_tk()
-    w._queue.put(("step_skipped", "model"))
-    w._queue.put(("all_done", {}))
-    w._poll_queue()
-    w._install_frame.step_skipped.assert_called_with("model")
+def test_check_page_steps_to_install_computes_missing(qapp):
+    from bertytype_setup.wizard import CheckPage
+    page = CheckPage()
+    page._on_check_done({"ollama": True, "model": False, "vibevoice": False})
+    assert set(page.steps_to_install()) == {"model", "vibevoice"}
 
 
-def test_poll_queue_dispatches_step_progress():
-    w = _make_wizard_no_tk()
-    w._queue.put(("step_progress", "ollama", 0.75))
-    w._queue.put(("all_done", {}))
-    w._poll_queue()
-    w._install_frame.step_progress.assert_called_with("ollama", 0.75)
+def test_check_page_no_steps_when_all_present(qapp):
+    from bertytype_setup.wizard import CheckPage
+    page = CheckPage()
+    page._on_check_done({"ollama": True, "model": True, "vibevoice": True})
+    assert page.steps_to_install() == []
 
 
-def test_apply_check_results_computes_steps():
-    w = _make_wizard_no_tk()
-    mock_frame = MagicMock()
-    mock_frame.update_status.return_value = False
-    w._apply_check_results(mock_frame, {"ollama": True, "model": False, "vibevoice": False})
-    assert set(w._steps_to_install) == {"model", "vibevoice"}
+def test_check_page_starts_incomplete(qapp):
+    from bertytype_setup.wizard import CheckPage
+    page = CheckPage()
+    assert not page.isComplete()
 
 
-def test_apply_check_results_no_steps_when_all_installed():
-    w = _make_wizard_no_tk()
-    mock_frame = MagicMock()
-    mock_frame.update_status.return_value = True
-    w._apply_check_results(mock_frame, {"ollama": True, "model": True, "vibevoice": True})
-    assert w._steps_to_install == []
+def test_check_page_complete_after_check_done(qapp):
+    from bertytype_setup.wizard import CheckPage
+    page = CheckPage()
+    page._on_check_done({"ollama": True, "model": True, "vibevoice": True})
+    assert page.isComplete()

@@ -1,4 +1,5 @@
 from __future__ import annotations
+import hashlib
 import json
 import queue
 import subprocess
@@ -26,8 +27,14 @@ def _download_file(
     q: queue.Queue,
     cancel: threading.Event,
     step_key: str,
+    expected_hash: Optional[str] = None,
 ) -> Optional[Path]:
-    """Stream-download url to dest. Returns dest on success, None on cancel/error."""
+    """Stream-download url to dest. Returns dest on success, None on cancel/error.
+
+    Note: Ollama does not publish cryptographic hashes for its installer downloads.
+    Therefore, _download_file cannot perform hash verification for OllamaSetup.exe.
+    When/if Ollama provides hash verification, add the expected_hash parameter here.
+    """
     tmp = dest.with_suffix(".tmp")
     try:
         with requests.get(url, stream=True, timeout=30) as resp:
@@ -44,6 +51,19 @@ def _download_file(
                     if total:
                         _post(q, "step_progress", step_key, downloaded / total)
         tmp.rename(dest)
+
+        # TODO: Hash verification for Ollama installer.
+        # Currently not implemented because Ollama does not publish SHA256 hashes
+        # for its installer. When hashes become available, add verification here:
+        #   actual_hash = hashlib.sha256(dest.read_bytes()).hexdigest()
+        #   assert actual_hash == expected_hash, f"Hash mismatch: {actual_hash} != {expected_hash}"
+        if expected_hash:
+            actual_hash = hashlib.sha256(dest.read_bytes()).hexdigest()
+            if actual_hash != expected_hash:
+                dest.unlink(missing_ok=True)
+                _post(q, "log", f"Hash mismatch: {actual_hash} != {expected_hash}")
+                return None
+
         return dest
     except Exception as e:
         tmp.unlink(missing_ok=True)
@@ -97,7 +117,11 @@ def install_ollama(q: queue.Queue, cancel: threading.Event) -> bool:
 
 
 def pull_model(q: queue.Queue, cancel: threading.Event, model: str = MODEL) -> bool:
-    """Stream `ollama pull <model>` and report progress."""
+    """Stream `ollama pull <model>` and report progress.
+
+    Note: Ollama does not publish cryptographic hashes for model downloads.
+    Therefore, no hash verification is performed on pulled model files.
+    """
     _post(q, "log", f"Pulling {model} (this may take several minutes)...")
     try:
         proc = subprocess.Popen(
@@ -139,9 +163,20 @@ def _list_hf_files(repo_id: str) -> list[str]:
     return list(list_repo_files(repo_id))
 
 
-def _hf_download_file(repo_id: str, filename: str) -> None:
+def _hf_download_file(repo_id: str, filename: str, expected_hash: Optional[str] = None) -> None:
+    """Download a file from HuggingFace Hub.
+
+    Args:
+        repo_id: The HuggingFace repository ID (e.g., "microsoft/VibeVoice-ASR-HF").
+        filename: The name of the file to download.
+        expected_hash: Optional SHA256 hash for integrity verification. If provided,
+            huggingface_hub will verify the downloaded file matches this hash.
+            TODO: Hardcode the hash after first successful download or fetch from
+            a trusted source, since we cannot pre-compute it at runtime for dynamic
+            model files.
+    """
     from huggingface_hub import hf_hub_download
-    hf_hub_download(repo_id=repo_id, filename=filename)
+    hf_hub_download(repo_id=repo_id, filename=filename, hash=expected_hash)
 
 
 def download_vibevoice(q: queue.Queue, cancel: threading.Event) -> bool:
@@ -161,7 +196,7 @@ def download_vibevoice(q: queue.Queue, cancel: threading.Event) -> bool:
             return False
         _post(q, "log", f"Downloading {filename} ({i + 1}/{total})...")
         try:
-            _hf_download_file(VIBEVOICE_REPO, filename)
+            _hf_download_file(VIBEVOICE_REPO, filename, None)  # hash=None — TODO: add hardcoded hashes after first download
         except Exception as e:
             _post(q, "log", f"Failed to download {filename}: {e}")
             return False

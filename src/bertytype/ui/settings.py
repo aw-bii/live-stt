@@ -1,136 +1,176 @@
 from __future__ import annotations
-import tkinter as tk
-import tkinter.messagebox
 from typing import Callable
-from bertytype.config import Config
-
-_MODIFIER_KEYSYMS = frozenset({
-    "Control_L", "Control_R",
-    "Shift_L", "Shift_R",
-    "Alt_L", "Alt_R",
-    "Meta_L", "Meta_R",
-})
-
-
-def build_hotkey_string(state: int, keysym: str) -> str | None:
-    if keysym in _MODIFIER_KEYSYMS:
-        return None
-    parts = []
-    if state & 0x4:
-        parts.append("ctrl")
-    if state & 0x1:
-        parts.append("shift")
-    if state & 0x20000:
-        parts.append("alt")
-    parts.append(keysym.lower())
-    return "+".join(parts)
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QKeySequence
+from PySide6.QtWidgets import (
+    QDialog, QFormLayout, QScrollArea, QWidget, QVBoxLayout,
+    QHBoxLayout, QLabel, QComboBox, QKeySequenceEdit, QCheckBox,
+    QSlider, QLineEdit, QPushButton, QFrame,
+)
+from bertytype.config import Config, _is_safe_model_name, _VALID_HOTKEY_MODES
 
 
-class _HotkeyCapture(tk.Frame):
-    def __init__(self, parent: tk.Misc, value: str) -> None:
-        super().__init__(parent)
-        self._prev = value
-        self._var = tk.StringVar(value=value)
-        entry = tk.Entry(self, textvariable=self._var, width=24)
-        entry.pack()
-        entry.bind("<FocusIn>", self._on_focus_in)
-        entry.bind("<FocusOut>", self._on_focus_out)
-        entry.bind("<KeyPress>", self._on_key)
+def _qks_to_str(ks: QKeySequence) -> str:
+    return ks.toString(QKeySequence.SequenceFormat.PortableText).lower()
 
-    def _on_focus_in(self, _: tk.Event) -> None:
-        self._prev = self._var.get()
-        self._var.set("Press hotkey...")
 
-    def _on_focus_out(self, _: tk.Event) -> None:
-        if self._var.get() == "Press hotkey...":
-            self._var.set(self._prev)
-
-    def _on_key(self, event: tk.Event) -> str:
-        result = build_hotkey_string(int(event.state), event.keysym)
-        if result is not None:
-            self._var.set(result)
-        return "break"
-
-    def get(self) -> str:
-        v = self._var.get()
-        return self._prev if v == "Press hotkey..." else v
+def _str_to_qks(s: str) -> QKeySequence:
+    return QKeySequence.fromString(s, QKeySequence.SequenceFormat.PortableText)
 
 
 def open_settings(cfg: Config, on_save: Callable[[Config], None]) -> None:
-    win = tk.Tk()
-    win.title("BertyType settings")
-    win.resizable(False, False)
+    dlg = _SettingsDialog(cfg, on_save)
+    dlg.exec()
 
-    row = 0
 
-    tk.Label(win, text="Mode:").grid(row=row, column=0, padx=8, pady=4, sticky="w")
-    mode_var = tk.StringVar(value=cfg.hotkey_mode)
-    tk.OptionMenu(win, mode_var, "double_tap_toggle", "ptt").grid(row=row, column=1, padx=8, sticky="w")
-    row += 1
+class _SettingsDialog(QDialog):
+    def __init__(self, cfg: Config, on_save: Callable[[Config], None]) -> None:
+        super().__init__()
+        self.setWindowTitle("BertyType Settings")
+        self.setMinimumSize(480, 400)
+        self._on_save = on_save
+        self._build_ui(cfg)
 
-    tk.Label(win, text="Hotkey:").grid(row=row, column=0, padx=8, pady=4, sticky="w")
-    hotkey_capture = _HotkeyCapture(win, value=cfg.hotkey)
-    hotkey_capture.grid(row=row, column=1, padx=8)
-    row += 1
+    def _build_ui(self, cfg: Config) -> None:
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
+        outer.setSpacing(0)
 
-    tk.Label(win, text="Double-tap window (s):").grid(row=row, column=0, padx=8, pady=4, sticky="w")
-    double_tap_window_var = tk.DoubleVar(value=cfg.double_tap_window)
-    tk.Scale(win, from_=0.05, to=2.0, resolution=0.05, variable=double_tap_window_var,
-             orient="horizontal", length=150).grid(row=row, column=1, padx=8, sticky="w")
-    row += 1
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        form_widget = QWidget()
+        form = QFormLayout(form_widget)
+        form.setContentsMargins(18, 12, 18, 12)
+        form.setHorizontalSpacing(16)
+        form.setVerticalSpacing(10)
 
-    tk.Label(win, text="Cancel:").grid(row=row, column=0, padx=8, pady=4, sticky="w")
-    cancel_capture = _HotkeyCapture(win, value=cfg.cancel_hotkey)
-    cancel_capture.grid(row=row, column=1, padx=8)
-    row += 1
+        self._mode_combo = QComboBox()
+        self._mode_combo.addItems(sorted(_VALID_HOTKEY_MODES))
+        self._mode_combo.setCurrentText(cfg.hotkey_mode)
+        form.addRow("Recording Mode", self._mode_combo)
 
-    tk.Label(win, text="LLM Model:").grid(row=row, column=0, padx=8, pady=4, sticky="w")
-    model_var = tk.StringVar(value=cfg.model)
-    tk.Entry(win, textvariable=model_var, width=24).grid(row=row, column=1, padx=8)
-    row += 1
+        self._hotkey_edit = QKeySequenceEdit(_str_to_qks(cfg.hotkey))
+        form.addRow("Hotkey", self._hotkey_edit)
 
-    refine_var = tk.BooleanVar(value=cfg.refine)
-    tk.Checkbutton(win, text="Refine with LLM", variable=refine_var).grid(
-        row=row, column=0, columnspan=2, padx=8, pady=4, sticky="w"
-    )
-    row += 1
+        self._dtw_slider = QSlider(Qt.Orientation.Horizontal)
+        self._dtw_slider.setRange(5, 200)
+        self._dtw_slider.setValue(round(cfg.double_tap_window * 100))
+        self._dtw_label = QLabel(f"{cfg.double_tap_window:.2f}s")
+        self._dtw_slider.valueChanged.connect(
+            lambda v: self._dtw_label.setText(f"{v / 100:.2f}s")
+        )
+        dtw_row = QWidget()
+        dtw_layout = QHBoxLayout(dtw_row)
+        dtw_layout.setContentsMargins(0, 0, 0, 0)
+        dtw_layout.addWidget(self._dtw_slider)
+        dtw_layout.addWidget(self._dtw_label)
+        form.addRow("Double-tap Window", dtw_row)
 
-    tk.Label(win, text="VAD Threshold:").grid(row=row, column=0, padx=8, pady=4, sticky="w")
-    vad_var = tk.DoubleVar(value=cfg.vad_threshold)
-    tk.Scale(win, from_=0.0, to=0.5, resolution=0.01, variable=vad_var,
-             orient="horizontal", length=150).grid(row=row, column=1, padx=8, sticky="w")
-    row += 1
+        self._cancel_edit = QKeySequenceEdit(_str_to_qks(cfg.cancel_hotkey))
+        form.addRow("Cancel Hotkey", self._cancel_edit)
 
-    tk.Label(win, text="LLM Timeout (s):").grid(row=row, column=0, padx=8, pady=4, sticky="w")
-    llm_timeout_var = tk.IntVar(value=cfg.llm_timeout)
-    tk.Entry(win, textvariable=llm_timeout_var, width=8).grid(row=row, column=1, padx=8, sticky="w")
-    row += 1
+        self._model_edit = QLineEdit(cfg.model)
+        form.addRow("LLM Model", self._model_edit)
 
-    tk.Label(win, text="Injection Delay (s):").grid(row=row, column=0, padx=8, pady=4, sticky="w")
-    injection_delay_var = tk.DoubleVar(value=cfg.injection_delay)
-    tk.Entry(win, textvariable=injection_delay_var, width=8).grid(row=row, column=1, padx=8, sticky="w")
-    row += 1
+        self._refine_check = QCheckBox()
+        self._refine_check.setChecked(cfg.refine)
+        form.addRow("Refine with LLM", self._refine_check)
 
-    def _save() -> None:
-        try:
-            updated = Config(
-                hotkey=hotkey_capture.get(),
-                cancel_hotkey=cancel_capture.get(),
-                model=model_var.get().strip(),
-                refine=refine_var.get(),
-                vad_threshold=vad_var.get(),
-                hotkey_mode=mode_var.get(),
-                double_tap_window=double_tap_window_var.get(),
-                llm_timeout=llm_timeout_var.get(),
-                injection_delay=injection_delay_var.get(),
-            )
-        except tk.TclError as e:
-            tk.messagebox.showerror("Invalid input", f"Please correct the highlighted fields.\n\n{e}")
+        self._vad_slider = QSlider(Qt.Orientation.Horizontal)
+        self._vad_slider.setRange(0, 100)
+        self._vad_slider.setValue(round(cfg.vad_threshold * 100))
+        self._vad_label = QLabel(f"{cfg.vad_threshold:.2f}")
+        self._vad_slider.valueChanged.connect(
+            lambda v: self._vad_label.setText(f"{v / 100:.2f}")
+        )
+        vad_row = QWidget()
+        vad_layout = QHBoxLayout(vad_row)
+        vad_layout.setContentsMargins(0, 0, 0, 0)
+        vad_layout.addWidget(self._vad_slider)
+        vad_layout.addWidget(self._vad_label)
+        form.addRow("VAD Threshold", vad_row)
+
+        self._llm_to_edit = QLineEdit(str(cfg.llm_timeout))
+        form.addRow("LLM Timeout", self._llm_to_edit)
+
+        self._delay_edit = QLineEdit(str(cfg.injection_delay))
+        form.addRow("Injection Delay", self._delay_edit)
+
+        scroll.setWidget(form_widget)
+        outer.addWidget(scroll, 1)
+
+        footer = QWidget()
+        footer_layout = QHBoxLayout(footer)
+        footer_layout.setContentsMargins(18, 10, 18, 10)
+        self._error_lbl = QLabel()
+        self._error_lbl.setObjectName("errorLabel")
+        self._error_lbl.setStyleSheet("color: #e84040;")
+        self._error_lbl.setFocusPolicy(Qt.FocusPolicy.TabFocus)
+        self._error_lbl.setAccessibleName("Error")
+        footer_layout.addWidget(self._error_lbl, 1)
+        save_btn = QPushButton("Save Settings")
+        save_btn.setProperty("accent", True)
+        save_btn.clicked.connect(self._save)
+        footer_layout.addWidget(save_btn)
+        outer.addWidget(footer)
+
+    def _err(self, msg: str) -> None:
+        self._error_lbl.setText(msg)
+        self._error_lbl.setFocus()
+
+    def _save(self) -> None:
+        self._error_lbl.setText("")
+
+        hotkey = _qks_to_str(self._hotkey_edit.keySequence())
+        if not hotkey:
+            self._err("Hotkey must not be empty")
             return
-        on_save(updated)
-        win.destroy()
 
-    tk.Button(win, text="Save", command=_save).grid(
-        row=row, column=0, columnspan=2, pady=8
-    )
-    win.mainloop()
+        cancel_hotkey = _qks_to_str(self._cancel_edit.keySequence())
+        if not cancel_hotkey:
+            self._err("Cancel Hotkey must not be empty")
+            return
+
+        model = self._model_edit.text().strip()
+        if not model:
+            self._err("LLM Model must not be empty")
+            return
+
+        if not _is_safe_model_name(model):
+            self._err("Model name contains invalid characters")
+            return
+
+        try:
+            llm_timeout = int(self._llm_to_edit.text())
+            if not (1 <= llm_timeout <= 600):
+                raise ValueError
+        except ValueError:
+            self._err("LLM Timeout must be a whole number between 1 and 600")
+            return
+
+        try:
+            injection_delay = float(self._delay_edit.text())
+            if not (0.0 <= injection_delay <= 5.0):
+                raise ValueError
+        except ValueError:
+            self._err("Injection Delay must be a number between 0.0 and 5.0")
+            return
+
+        updated = Config(
+            hotkey=hotkey,
+            hotkey_mode=self._mode_combo.currentText(),
+            cancel_hotkey=cancel_hotkey,
+            model=model,
+            refine=self._refine_check.isChecked(),
+            vad_threshold=self._vad_slider.value() / 100,
+            llm_timeout=llm_timeout,
+            injection_delay=injection_delay,
+            double_tap_window=self._dtw_slider.value() / 100,
+        )
+        try:
+            self._on_save(updated)
+        except Exception as exc:
+            self._err(f"Could not save settings: {exc}")
+            return
+        self.accept()
